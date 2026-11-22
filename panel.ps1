@@ -1,5 +1,5 @@
 # ============================================================
-#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v6  —  H.sefrani
+#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v7  —  H.sefrani
 #  التشغيل:  irm is.gd/Sefrani | iex
 #  ملاحظة: مع RightToLeft = Yes يعكس ويندوز محاذاة النص، لذا Left تعني يمين الشاشة.
 # ============================================================
@@ -252,6 +252,26 @@ function Get-UserFolders {
 }
 function Start-Console($cmd) { Start-Process powershell -ArgumentList '-NoExit', '-Command', $cmd }
 
+
+# ---------- مساعدات القائمة اليمنى ----------
+$HSDir = "$env:ProgramData\HSefrani"
+function Write-Helper($name, $body) {
+    New-Item $HSDir -ItemType Directory -Force | Out-Null
+    $p = Join-Path $HSDir $name
+    Set-Content -Path $p -Value $body -Encoding UTF8
+    $p
+}
+function Add-CtxMenu($sub, $text, $cmd, $icon = '', [switch]$Shield) {
+    $k = [Microsoft.Win32.Registry]::ClassesRoot.CreateSubKey($sub)
+    $k.SetValue('', $text); $k.SetValue('MUIVerb', $text)
+    if ($icon)   { $k.SetValue('Icon', $icon) }
+    if ($Shield) { $k.SetValue('HasLUAShield', '') }
+    $c = $k.CreateSubKey('command'); $c.SetValue('', $cmd); $c.Close(); $k.Close()
+}
+function Remove-CtxMenu($sub) { try { [Microsoft.Win32.Registry]::ClassesRoot.DeleteSubKeyTree($sub, $false) } catch {} }
+$CtxKeys = '*\shell\HS_TakeOwn', 'Directory\shell\HS_TakeOwn', 'Directory\shell\HS_PSAdmin', 'Directory\Background\shell\HS_PSAdmin',
+           '*\shell\HS_CopyPath', 'Directory\shell\HS_CopyPath'
+
 # ---------------- المفضلة ----------------
 $FavFile = "$env:ProgramData\HSefrani\favorites.txt"
 $Favs = New-Object System.Collections.Generic.HashSet[string]
@@ -262,6 +282,7 @@ function Save-Favs { New-Item (Split-Path $FavFile) -ItemType Directory -Force |
 $Sections = [ordered]@{
     main  = @{ Name = 'المهام الأساسية — بالترتيب'; Tile = [Drawing.Color]::FromArgb(30, 64, 120);  Accent = [Drawing.Color]::FromArgb(96, 165, 250) }
     bak   = @{ Name = 'النسخ الاحتياطي والنقل (قبل وبعد الفورمات)'; Tile = [Drawing.Color]::FromArgb(14, 90, 90); Accent = [Drawing.Color]::FromArgb(94, 234, 212) }
+    prod  = @{ Name = 'الإنتاجية واختصار العمل';      Tile = [Drawing.Color]::FromArgb(20, 75, 115);  Accent = [Drawing.Color]::FromArgb(147, 197, 253) }
     apps  = @{ Name = 'تنزيل البرامج';               Tile = [Drawing.Color]::FromArgb(22, 90, 60);   Accent = [Drawing.Color]::FromArgb(74, 222, 128) }
     clean = @{ Name = 'التنظيف والكاش';              Tile = [Drawing.Color]::FromArgb(120, 40, 60);  Accent = [Drawing.Color]::FromArgb(251, 113, 133) }
     look  = @{ Name = 'المظهر والمستكشف';            Tile = [Drawing.Color]::FromArgb(76, 45, 110);  Accent = [Drawing.Color]::FromArgb(192, 132, 252) }
@@ -273,7 +294,7 @@ $Sections = [ordered]@{
     boot  = @{ Name = 'إعادة التشغيل الخاصة';         Tile = [Drawing.Color]::FromArgb(55, 55, 70);   Accent = [Drawing.Color]::FromArgb(165, 180, 252) }
     feat  = @{ Name = 'ميزات ويندوز';                 Tile = [Drawing.Color]::FromArgb(25, 60, 100);  Accent = [Drawing.Color]::FromArgb(125, 211, 252) }
     quick = @{ Name = 'اختصارات سريعة';               Tile = [Drawing.Color]::FromArgb(40, 48, 62);   Accent = [Drawing.Color]::FromArgb(226, 232, 240) }
-    keys  = @{ Name = 'اختصارات وأوامر مفيدة';      Tile = [Drawing.Color]::FromArgb(70, 50, 20);   Accent = [Drawing.Color]::FromArgb(253, 186, 116) }
+    kbd   = @{ Name = 'اختصارات وأوامر مفيدة';      Tile = [Drawing.Color]::FromArgb(70, 50, 20);   Accent = [Drawing.Color]::FromArgb(253, 186, 116) }
     lic   = @{ Name = 'التفعيل ونسخة ويندوز';        Tile = [Drawing.Color]::FromArgb(100, 80, 15);  Accent = [Drawing.Color]::FromArgb(250, 204, 21) }
     tools = @{ Name = 'أدوات الجهاز';                       Tile = [Drawing.Color]::FromArgb(110, 60, 20);  Accent = [Drawing.Color]::FromArgb(251, 146, 60) }
 }
@@ -758,7 +779,7 @@ $Tasks = @(
     @{ G = 'quick'; I = 0xE9D2; T = 'مراقب الموارد'; D = 'resmon'; S = { Start-Process resmon } },
     @{ G = 'quick'; I = 0xE756; T = 'موجه الأوامر (مسؤول)'; D = 'cmd'; S = { Start-Process cmd -Verb RunAs } },
     # ===== اختصارات وأوامر =====
-    @{ G = 'keys'; I = 0xE765; T = 'ورقة اختصارات الكيبورد'; D = 'Win + X · Win + V · Win + Shift + S …'
+    @{ G = 'kbd'; I = 0xE765; T = 'ورقة اختصارات الكيبورد'; D = 'Win + X · Win + V · Win + Shift + S …'
        S = { Show-Text 'اختصارات لوحة المفاتيح' (@(
                'Win + X                 قائمة سريعة (مدير الأجهزة، الأقراص، PowerShell كمسؤول)'
                'Win + I                 الإعدادات'
@@ -784,7 +805,7 @@ $Tasks = @(
                'Alt + F4                إغلاق النافذة / إيقاف التشغيل من سطح المكتب'
              ) -join "`r`n") } },
 
-    @{ G = 'keys'; I = 0xE756; T = 'ورقة أوامر Run'; D = 'Win + R ثم اكتب الأمر'
+    @{ G = 'kbd'; I = 0xE756; T = 'ورقة أوامر Run'; D = 'Win + R ثم اكتب الأمر'
        S = { Show-Text 'أوامر Run  (Win + R)' (@(
                'appwiz.cpl        البرامج المثبّتة'
                'ncpa.cpl          اتصالات الشبكة'
@@ -808,7 +829,7 @@ $Tasks = @(
                'osk               لوحة المفاتيح على الشاشة'
              ) -join "`r`n") } },
 
-    @{ G = 'keys'; I = 0xE756; T = 'ورقة أوامر CMD'; D = 'sfc · DISM · winget · ipconfig …'
+    @{ G = 'kbd'; I = 0xE756; T = 'ورقة أوامر CMD'; D = 'sfc · DISM · winget · ipconfig …'
        S = { Show-Text 'أوامر CMD / PowerShell (كمسؤول)' (@(
                'sfc /scannow                                    فحص ملفات النظام وإصلاحها'
                'DISM /Online /Cleanup-Image /RestoreHealth      إصلاح صورة ويندوز'
@@ -832,35 +853,127 @@ $Tasks = @(
                'netstat -ano                                    الاتصالات المفتوحة'
              ) -join "`r`n") } },
 
-    @{ G = 'keys'; I = 0xE8F4; T = 'تفعيل سجل الحافظة'; D = 'Win + V لكل ما نسخته'
+    @{ G = 'kbd'; I = 0xE8F4; T = 'تفعيل سجل الحافظة'; D = 'Win + V لكل ما نسخته'
        S = { Set-Reg 'HKCU:\Software\Microsoft\Clipboard' 'EnableClipboardHistory' 1 } },
 
-    @{ G = 'keys'; I = 0xE7E8; T = 'مجلد بدء التشغيل'; D = 'shell:startup'
+    @{ G = 'kbd'; I = 0xE7E8; T = 'مجلد بدء التشغيل'; D = 'shell:startup'
        S = { Start-Process explorer 'shell:startup' } },
 
-    @{ G = 'keys'; I = 0xE74D; T = 'مجلد الملفات المؤقتة'; D = '%temp%'
+    @{ G = 'kbd'; I = 0xE74D; T = 'مجلد الملفات المؤقتة'; D = '%temp%'
        S = { Start-Process explorer $env:TEMP } },
 
-    @{ G = 'keys'; I = 0xE946; T = 'نسخة ويندوز'; D = 'winver'
+    @{ G = 'kbd'; I = 0xE946; T = 'نسخة ويندوز'; D = 'winver'
        S = { Start-Process winver } },
 
-    @{ G = 'keys'; I = 0xE7F8; T = 'ملخّص النظام'; D = 'systeminfo + تاريخ التنصيب'
+    @{ G = 'kbd'; I = 0xE7F8; T = 'ملخّص النظام'; D = 'systeminfo + تاريخ التنصيب'
        S = { Show-Text 'systeminfo' ((systeminfo | Out-String).Trim()) } },
 
-    @{ G = 'keys'; I = 0xE749; T = 'الطابعات'; D = 'control printers'
+    @{ G = 'kbd'; I = 0xE749; T = 'الطابعات'; D = 'control printers'
        S = { Start-Process control 'printers' } },
 
-    @{ G = 'keys'; I = 0xE767; T = 'أجهزة الصوت'; D = 'mmsys.cpl'
+    @{ G = 'kbd'; I = 0xE767; T = 'أجهزة الصوت'; D = 'mmsys.cpl'
        S = { Start-Process mmsys.cpl } },
 
-    @{ G = 'keys'; I = 0xE7FC; T = 'معلومات كرت الشاشة'; D = 'dxdiag'
+    @{ G = 'kbd'; I = 0xE7FC; T = 'معلومات كرت الشاشة'; D = 'dxdiag'
        S = { Start-Process dxdiag } },
 
-    @{ G = 'keys'; I = 0xE823; T = 'إيقاف التشغيل بعد مدة'; D = 'مؤقت بالدقائق'
+    @{ G = 'kbd'; I = 0xE823; T = 'إيقاف التشغيل بعد مدة'; D = 'مؤقت بالدقائق'
        S = { $m = Ask 'بعد كم دقيقة يُطفأ الجهاز؟ (0 = إلغاء مؤقت سابق)' 'إيقاف التشغيل المجدول' '60'
              if ($m -eq '') { throw 'أُلغي' }
              if ([int]$m -eq 0) { shutdown /a | Out-Null; Write-Log '  أُلغي الإيقاف المجدول.' }
-             else { shutdown /s /t ([int]$m * 60) | Out-Null; Write-Log "  سيُطفأ الجهاز بعد $m دقيقة." } } }
+             else { shutdown /s /t ([int]$m * 60) | Out-Null; Write-Log "  سيُطفأ الجهاز بعد $m دقيقة." } } },
+    # ===== الإنتاجية =====
+    @{ G = 'prod'; I = 0xE896; T = 'حزمة أدوات الإنتاجية'; D = 'PowerToys · Everything · Ditto · ShareX'
+       S = { $ids = 'Microsoft.PowerToys', 'voidtools.Everything', 'Ditto.Ditto', 'ShareX.ShareX'
+             Start-Console (($ids | ForEach-Object { "winget install --id $_ -e --accept-source-agreements --accept-package-agreements" }) -join '; ')
+             Write-Log '  بعد التثبيت: Alt+Space = بحث PowerToys · Win+Shift+T = نسخ نص من صورة · Win+Ctrl+T = نافذة فوق الكل' } },
+
+    @{ G = 'prod'; I = 0xE765; T = 'اختصارات نصية (AutoHotkey)'; D = ';adr ← عنوانك الكامل …'
+       S = { $ahk = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'HSefrani-shortcuts.ahk'
+             if (-not (Test-Path $ahk)) {
+                 $body = @(
+                     '#Requires AutoHotkey v2.0'
+                     '; ===== اختصارات نصية: اكتب الاختصار ثم مسافة أو Enter ====='
+                     '; غيّر النص بعد :: الثانية كما تريد، ثم احفظ وأعد تشغيل الملف'
+                     '::;adr::اكتب عنوانك الكامل هنا'
+                     '::;mail::example@mail.com'
+                     '::;tel::+32 000 00 00 00'
+                     '::;sig::مع التحية،`nالاسم'
+                     ''
+                     '; ===== اختصارات برامج  (^ = Ctrl  ! = Alt  # = Win  + = Shift) ====='
+                     '^!c::Run "calc.exe"'
+                     '^!n::Run "notepad.exe"'
+                     '^!e::Run "explorer.exe"'
+                     '^!t::Run "taskmgr.exe"'
+                     ''
+                     '; ;now يكتب التاريخ والوقت الحالي'
+                     ':*:;now::'
+                     '{'
+                     '    SendText FormatTime(, "dd/MM/yyyy HH:mm")'
+                     '}'
+                 ) -join "`r`n"
+                 [IO.File]::WriteAllText($ahk, $body, (New-Object Text.UTF8Encoding $true))
+             }
+             $lnk = Join-Path ([Environment]::GetFolderPath('Startup')) 'HSefrani-shortcuts.lnk'
+             $ws = New-Object -ComObject WScript.Shell
+             $s = $ws.CreateShortcut($lnk); $s.TargetPath = $ahk; $s.Save()
+             Start-Console "winget install --id AutoHotkey.AutoHotkey -e --accept-source-agreements --accept-package-agreements; Start-Process '$ahk'"
+             Start-Process notepad $ahk
+             Write-Log "  عدّل النصوص في الملف المفتوح ثم احفظ. يعمل تلقائياً مع ويندوز." } },
+
+    @{ G = 'prod'; I = 0xE756; T = 'PowerShell هنا كمسؤول'; D = 'في القائمة اليمنى لأي مجلد'
+       S = { $h = Write-Helper 'psadmin.ps1' @'
+param($p)
+Start-Process powershell -Verb RunAs -ArgumentList '-NoExit', '-Command', ("Set-Location -LiteralPath '" + $p.Replace("'", "''") + "'")
+'@
+             $cmd = "powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File `"$h`""
+             Add-CtxMenu 'Directory\shell\HS_PSAdmin' 'فتح PowerShell هنا كمسؤول' "$cmd `"%1`"" 'powershell.exe' -Shield
+             Add-CtxMenu 'Directory\Background\shell\HS_PSAdmin' 'فتح PowerShell هنا كمسؤول' "$cmd `"%V`"" 'powershell.exe' -Shield } },
+
+    @{ G = 'prod'; I = 0xE72E; T = 'امتلاك الملف (Take Ownership)'; D = 'للملفات التي يرفض ويندوز حذفها'
+       S = { $h = Write-Helper 'takeown.ps1' @'
+param($p)
+$admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $admin) { Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" `"$p`""; exit }
+if (Test-Path -LiteralPath $p -PathType Container) { takeown /f "$p" /r /d y | Out-Null; icacls "$p" /grant '*S-1-5-32-544:F' /t /c /q | Out-Null }
+else { takeown /f "$p" | Out-Null; icacls "$p" /grant '*S-1-5-32-544:F' /c /q | Out-Null }
+'@
+             $cmd = "powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File `"$h`" `"%1`""
+             Add-CtxMenu '*\shell\HS_TakeOwn' 'امتلاك الملف' $cmd 'imageres.dll,-78' -Shield
+             Add-CtxMenu 'Directory\shell\HS_TakeOwn' 'امتلاك المجلد' $cmd 'imageres.dll,-78' -Shield } },
+
+    @{ G = 'prod'; I = 0xE8C8; T = 'نسخ المسار'; D = 'في القائمة اليمنى لأي ملف أو مجلد'
+       S = { $h = Write-Helper 'copypath.ps1' 'param($p) Set-Clipboard -Value $p'
+             $cmd = "powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File `"$h`" `"%1`""
+             Add-CtxMenu '*\shell\HS_CopyPath' 'نسخ المسار' $cmd 'shell32.dll,-16763'
+             Add-CtxMenu 'Directory\shell\HS_CopyPath' 'نسخ المسار' $cmd 'shell32.dll,-16763' } },
+
+    @{ G = 'prod'; I = 0xE724; T = 'تخصيص "إرسال إلى"'; D = 'أضف مجلداتك المفضلة'
+       S = { Start-Process explorer 'shell:sendto'
+             Write-Log '  ضع في هذا المجلد اختصاراً لأي مجلد تستعمله كثيراً، فيظهر في: زر أيمن ← إرسال إلى.' } },
+
+    @{ G = 'prod'; I = 0xE711; T = 'إزالة إضافات القائمة اليمنى'; D = 'إلغاء ما أضافته اللوحة'
+       S = { foreach ($k in $CtxKeys) { Remove-CtxMenu $k } } },
+
+    @{ G = 'prod'; I = 0xE74D; T = 'التنظيف التلقائي (Storage Sense)'; D = 'كل أسبوع: Temp + السلة بعد 30 يوماً'
+       S = { $p = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy'
+             Set-Reg $p '01' 1; Set-Reg $p '2048' 7; Set-Reg $p '04' 1; Set-Reg $p '08' 1; Set-Reg $p '256' 30 } },
+
+    @{ G = 'prod'; I = 0xE81C; T = 'نسخة احتياطية أسبوعية'; D = 'كل جمعة 20:00 — تلقائياً'
+       S = { $d = Pick-Folder 'اختر مكان النسخة الأسبوعية (هارد خارجي أو مجلد شبكة):'
+             $root = Join-Path $d "Backup_$env:COMPUTERNAME"
+             $f = Get-UserFolders
+             $lines = foreach ($k in $f.Keys) { "robocopy '$($f[$k])' '$root\$k' /E /R:1 /W:1 /XJ /MT:16 /NFL /NDL /NP" }
+             $h = Write-Helper 'weekly-backup.ps1' ($lines -join "`r`n")
+             $act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File `"$h`""
+             $trg = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Friday -At '20:00'
+             $set = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopIfGoingOnBatteries -AllowStartIfOnBatteries
+             Register-ScheduledTask -TaskName 'HSefrani Weekly Backup' -Action $act -Trigger $trg -Settings $set -User $env:USERNAME -Force | Out-Null
+             Write-Log "  كل جمعة 20:00 → $root  (إن كان الجهاز مطفأً تُنفَّذ عند التشغيل التالي)" } },
+
+    @{ G = 'prod'; I = 0xE711; T = 'إلغاء النسخة الأسبوعية'; D = 'حذف المهمة المجدولة'
+       S = { Unregister-ScheduledTask -TaskName 'HSefrani Weekly Backup' -Confirm:$false } }
+
 
 
 )
@@ -880,8 +993,8 @@ $fBtn   = New-Object Drawing.Font('Segoe UI', 9.5, [Drawing.FontStyle]::Bold)
 
 # ---------------- حجم النافذة حسب الشاشة ----------------
 $wa = [Windows.Forms.Screen]::PrimaryScreen.WorkingArea
-$W  = [Math]::Min(1500, [int]($wa.Width * 0.92))
-$H  = [Math]::Min(950,  [int]($wa.Height * 0.92))
+$W  = [Math]::Min(1800, [int]($wa.Width * 0.95))
+$H  = [Math]::Min([int]($wa.Height * 0.88), [int]($W * 0.56))
 
 $form = New-Object Windows.Forms.Form
 $form.Text = 'لوحة إعدادات ويندوز — H.sefrani'
@@ -1079,7 +1192,7 @@ function Show-AppPicker {
 }
 
 # ---------------- بناء الواجهة ----------------
-foreach ($key in $Sections.Keys) {
+foreach ($key in @($Sections.get_Keys())) {
     $sec = $Sections[$key]
     Add-Header $sec
     foreach ($t in ($Tasks | Where-Object { $_.G -eq $key })) {
