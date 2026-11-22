@@ -313,12 +313,11 @@ $Tasks = @(
     @{ G = 'ext'; I = 0xE896; T = 'تنزيل ويندوز 10 (رسمي)'; D = 'Media Creation Tool من مايكروسوفت'
        S = { Start-Process 'https://www.microsoft.com/software-download/windows10' } },
 
-    @{ G = 'ext'; I = 0xE896; T = 'تنزيل أوفيس (رسمي)'; D = 'من حسابك في مايكروسوفت'
-       S = { Start-Process 'https://account.microsoft.com/services' } },
-
-    @{ G = 'ext'; I = 0xE8A5; T = 'تثبيت أوفيس (مثبّت رسمي)'; D = 'اختر النسخة واللغة — من خوادم مايكروسوفت'
+    @{ G = 'ext'; I = 0xE8A5; T = 'تنزيل وتثبيت أوفيس'; D = 'بدون تسجيل دخول — اختر النسخة واللغة'
        S = { $prod = [ordered]@{
-                 'Microsoft 365 Apps'          = 'O365ProPlusRetail'
+                 'Microsoft 365 (Personal / Family)'  = 'O365HomePremRetail'
+                 'Microsoft 365 (Business)'           = 'O365BusinessRetail'
+                 'Microsoft 365 Apps (Enterprise)'    = 'O365ProPlusRetail'
                  'Office 2024 Pro Plus'        = 'ProPlus2024Retail'
                  'Office 2024 Home & Business' = 'HomeBusiness2024Retail'
                  'Office 2021 Pro Plus'        = 'ProPlus2021Retail'
@@ -331,7 +330,7 @@ $Tasks = @(
              $exe = Join-Path $env:TEMP 'OfficeSetup.exe'
              Invoke-WebRequest $url -OutFile $exe -UseBasicParsing
              Start-Process $exe
-             Write-Log "  يُثبَّت: $p ($l). بعد التثبيت فعّله بحسابك أو بمفتاحك من قسم التفعيل." } },
+             Write-Log "  يُثبَّت: $p ($l). بعد التثبيت: افتح Word وسجّل الدخول بحساب صاحب الاشتراك." } },
 
     @{ G = 'ext'; I = 0xE88E; T = 'Rufus'; D = 'صنع فلاشة تنصيب من ملف ISO'
        S = { Start-Console 'winget install --id Rufus.Rufus -e --accept-source-agreements --accept-package-agreements' } },
