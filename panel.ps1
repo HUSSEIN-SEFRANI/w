@@ -316,6 +316,23 @@ $Tasks = @(
     @{ G = 'ext'; I = 0xE896; T = 'تنزيل أوفيس (رسمي)'; D = 'من حسابك في مايكروسوفت'
        S = { Start-Process 'https://account.microsoft.com/services' } },
 
+    @{ G = 'ext'; I = 0xE8A5; T = 'تثبيت أوفيس (مثبّت رسمي)'; D = 'اختر النسخة واللغة — من خوادم مايكروسوفت'
+       S = { $prod = [ordered]@{
+                 'Microsoft 365 Apps'          = 'O365ProPlusRetail'
+                 'Office 2024 Pro Plus'        = 'ProPlus2024Retail'
+                 'Office 2024 Home & Business' = 'HomeBusiness2024Retail'
+                 'Office 2021 Pro Plus'        = 'ProPlus2021Retail'
+                 'Office 2019 Pro Plus'        = 'ProPlus2019Retail'
+             }
+             $lang = [ordered]@{ 'العربية' = 'ar-sa'; 'Français' = 'fr-fr'; 'English' = 'en-us'; 'Nederlands' = 'nl-nl'; 'Deutsch' = 'de-de' }
+             $p = (Show-Picker 'اختر نسخة أوفيس' ([string[]]@($prod.get_Keys())) 'التالي' -Single)[0]
+             $l = (Show-Picker 'اختر لغة أوفيس' ([string[]]@($lang.get_Keys())) 'تنزيل وتثبيت' -Single)[0]
+             $url = "https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=$($prod[$p])&platform=x64&language=$($lang[$l])&version=O16GA"
+             $exe = Join-Path $env:TEMP 'OfficeSetup.exe'
+             Invoke-WebRequest $url -OutFile $exe -UseBasicParsing
+             Start-Process $exe
+             Write-Log "  يُثبَّت: $p ($l). بعد التثبيت فعّله بحسابك أو بمفتاحك من قسم التفعيل." } },
+
     @{ G = 'ext'; I = 0xE88E; T = 'Rufus'; D = 'صنع فلاشة تنصيب من ملف ISO'
        S = { Start-Console 'winget install --id Rufus.Rufus -e --accept-source-agreements --accept-package-agreements' } },
 
