@@ -4,7 +4,7 @@
 #  اضغط على أي مربع لتنفيذه. الأخضر = تم، الأحمر = فشل.
 # ============================================================
 
-$SelfUrl = 'hussein-sefrani.github.io/w'
+$SelfUrl = 'https://raw.githubusercontent.com/HUSSEIN-SEFRANI/w/main/win.ps1'
 
 function Start-WinPanel {
 
