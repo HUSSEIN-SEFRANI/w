@@ -280,6 +280,7 @@ function Save-Favs { New-Item (Split-Path $FavFile) -ItemType Directory -Force |
 
 # ---------------- الأقسام ----------------
 $Sections = [ordered]@{
+    ext   = @{ Name = 'أدوات خارجية';                 Tile = [Drawing.Color]::FromArgb(0, 52, 18);   Accent = [Drawing.Color]::FromArgb(0, 255, 65) }
     main  = @{ Name = 'المهام الأساسية — بالترتيب'; Tile = [Drawing.Color]::FromArgb(0, 40, 12);  Accent = [Drawing.Color]::FromArgb(0, 255, 65) }
     bak   = @{ Name = 'النسخ الاحتياطي والنقل (قبل وبعد الفورمات)'; Tile = [Drawing.Color]::FromArgb(0, 34, 20); Accent = [Drawing.Color]::FromArgb(57, 255, 20) }
     prod  = @{ Name = 'الإنتاجية واختصار العمل';      Tile = [Drawing.Color]::FromArgb(4, 38, 8);  Accent = [Drawing.Color]::FromArgb(0, 230, 118) }
@@ -302,6 +303,10 @@ $Sections = [ordered]@{
 # ---------------- المهام ----------------
 # G = القسم ، I = رمز (Segoe MDL2 Assets) ، T = العنوان ، D = الوصف ، S = الكود
 $Tasks = @(
+    # ===== أدوات خارجية =====
+    @{ G = 'ext'; I = 0xE756; T = 'Chris Titus WinUtil'; D = 'irm christitus.com/win | iex'
+       S = { Start-Console 'irm christitus.com/win | iex' } },
+
     # ===== الأساسية =====
     @{ G = 'main'; I = 0xE7F4; T = '1- أيقونات سطح المكتب'; D = 'الكمبيوتر · الشبكة · لوحة التحكم'
        S = { $icons = '{20D04FE0-3AEA-1069-A2D8-08002B30309D}', '{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}', '{5399E694-6CE5-4D6C-8FCE-1D8870FDCBA0}'
