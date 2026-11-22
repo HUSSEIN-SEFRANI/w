@@ -1,5 +1,5 @@
 # ============================================================
-#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v7  —  H.sefrani
+#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v8  —  H.sefrani
 #  التشغيل:  irm is.gd/Sefrani | iex
 #  ملاحظة: مع RightToLeft = Yes يعكس ويندوز محاذاة النص، لذا Left تعني يمين الشاشة.
 # ============================================================
@@ -90,13 +90,13 @@ function Show-Picker($title, [string[]]$items, $okText = 'تنفيذ', [switch]$
     $pb.Dock = 'Bottom'; $pb.Height = 52; $pb.Padding = New-Object Windows.Forms.Padding(8)
     $ok = New-Object Windows.Forms.Button
     $ok.Text = $okText; $ok.Size = New-Object Drawing.Size(160, 34)
-    $ok.FlatStyle = 'Flat'; $ok.BackColor = [Drawing.Color]::FromArgb(22, 163, 74); $ok.ForeColor = $cText
+    $ok.FlatStyle = 'Flat'; $ok.BackColor = [Drawing.Color]::FromArgb(0, 38, 12); $ok.ForeColor = $cText
     $ok.DialogResult = 'OK'
     $pb.Controls.Add($ok)
     if (-not $Single) {
         $all = New-Object Windows.Forms.Button
         $all.Text = 'تحديد الكل'; $all.Size = New-Object Drawing.Size(110, 34)
-        $all.FlatStyle = 'Flat'; $all.BackColor = [Drawing.Color]::FromArgb(71, 85, 105); $all.ForeColor = $cText
+        $all.FlatStyle = 'Flat'; $all.BackColor = [Drawing.Color]::FromArgb(0, 32, 14); $all.ForeColor = $cText
         $all.Add_Click({ for ($i = 0; $i -lt $list.Items.Count; $i++) { $list.SetItemChecked($i, $true) } })
         $pb.Controls.Add($all)
     }
@@ -122,7 +122,7 @@ function Show-Text($title, $text) {
     $tb.Text = $text
     $cp = New-Object Windows.Forms.Button
     $cp.Text = 'نسخ الكل'; $cp.Dock = 'Bottom'; $cp.Height = 38
-    $cp.FlatStyle = 'Flat'; $cp.BackColor = [Drawing.Color]::FromArgb(37, 99, 235); $cp.ForeColor = $cText
+    $cp.FlatStyle = 'Flat'; $cp.BackColor = [Drawing.Color]::FromArgb(0, 50, 16); $cp.ForeColor = $cText
     $cp.Add_Click({ Set-Clipboard $tb.Text; $cp.Text = '✔ تم النسخ' })
     $dlg.Controls.Add($tb); $dlg.Controls.Add($cp)
     [void]$dlg.ShowDialog($form)
@@ -280,23 +280,23 @@ function Save-Favs { New-Item (Split-Path $FavFile) -ItemType Directory -Force |
 
 # ---------------- الأقسام ----------------
 $Sections = [ordered]@{
-    main  = @{ Name = 'المهام الأساسية — بالترتيب'; Tile = [Drawing.Color]::FromArgb(30, 64, 120);  Accent = [Drawing.Color]::FromArgb(96, 165, 250) }
-    bak   = @{ Name = 'النسخ الاحتياطي والنقل (قبل وبعد الفورمات)'; Tile = [Drawing.Color]::FromArgb(14, 90, 90); Accent = [Drawing.Color]::FromArgb(94, 234, 212) }
-    prod  = @{ Name = 'الإنتاجية واختصار العمل';      Tile = [Drawing.Color]::FromArgb(20, 75, 115);  Accent = [Drawing.Color]::FromArgb(147, 197, 253) }
-    apps  = @{ Name = 'تنزيل البرامج';               Tile = [Drawing.Color]::FromArgb(22, 90, 60);   Accent = [Drawing.Color]::FromArgb(74, 222, 128) }
-    clean = @{ Name = 'التنظيف والكاش';              Tile = [Drawing.Color]::FromArgb(120, 40, 60);  Accent = [Drawing.Color]::FromArgb(251, 113, 133) }
-    look  = @{ Name = 'المظهر والمستكشف';            Tile = [Drawing.Color]::FromArgb(76, 45, 110);  Accent = [Drawing.Color]::FromArgb(192, 132, 252) }
-    sys   = @{ Name = 'النظام والخصوصية والأداء';    Tile = [Drawing.Color]::FromArgb(20, 83, 85);   Accent = [Drawing.Color]::FromArgb(45, 212, 191) }
-    net   = @{ Name = 'الشبكة والإنترنت';            Tile = [Drawing.Color]::FromArgb(15, 70, 110);  Accent = [Drawing.Color]::FromArgb(56, 189, 248) }
-    perf  = @{ Name = 'الأداء وبدء التشغيل والتحديثات'; Tile = [Drawing.Color]::FromArgb(80, 30, 100); Accent = [Drawing.Color]::FromArgb(232, 121, 249) }
-    comf  = @{ Name = 'اللغة والوقت والدخول';         Tile = [Drawing.Color]::FromArgb(60, 70, 25);   Accent = [Drawing.Color]::FromArgb(163, 230, 53) }
-    fix   = @{ Name = 'الصيانة والإصلاح';            Tile = [Drawing.Color]::FromArgb(110, 30, 30);  Accent = [Drawing.Color]::FromArgb(248, 113, 113) }
-    boot  = @{ Name = 'إعادة التشغيل الخاصة';         Tile = [Drawing.Color]::FromArgb(55, 55, 70);   Accent = [Drawing.Color]::FromArgb(165, 180, 252) }
-    feat  = @{ Name = 'ميزات ويندوز';                 Tile = [Drawing.Color]::FromArgb(25, 60, 100);  Accent = [Drawing.Color]::FromArgb(125, 211, 252) }
-    quick = @{ Name = 'اختصارات سريعة';               Tile = [Drawing.Color]::FromArgb(40, 48, 62);   Accent = [Drawing.Color]::FromArgb(226, 232, 240) }
-    kbd   = @{ Name = 'اختصارات وأوامر مفيدة';      Tile = [Drawing.Color]::FromArgb(70, 50, 20);   Accent = [Drawing.Color]::FromArgb(253, 186, 116) }
-    lic   = @{ Name = 'التفعيل ونسخة ويندوز';        Tile = [Drawing.Color]::FromArgb(100, 80, 15);  Accent = [Drawing.Color]::FromArgb(250, 204, 21) }
-    tools = @{ Name = 'أدوات الجهاز';                       Tile = [Drawing.Color]::FromArgb(110, 60, 20);  Accent = [Drawing.Color]::FromArgb(251, 146, 60) }
+    main  = @{ Name = 'المهام الأساسية — بالترتيب'; Tile = [Drawing.Color]::FromArgb(0, 40, 12);  Accent = [Drawing.Color]::FromArgb(0, 255, 65) }
+    bak   = @{ Name = 'النسخ الاحتياطي والنقل (قبل وبعد الفورمات)'; Tile = [Drawing.Color]::FromArgb(0, 34, 20); Accent = [Drawing.Color]::FromArgb(57, 255, 20) }
+    prod  = @{ Name = 'الإنتاجية واختصار العمل';      Tile = [Drawing.Color]::FromArgb(4, 38, 8);  Accent = [Drawing.Color]::FromArgb(0, 230, 118) }
+    apps  = @{ Name = 'تنزيل البرامج';               Tile = [Drawing.Color]::FromArgb(0, 44, 18);   Accent = [Drawing.Color]::FromArgb(124, 252, 0) }
+    clean = @{ Name = 'التنظيف والكاش';              Tile = [Drawing.Color]::FromArgb(6, 36, 14);  Accent = [Drawing.Color]::FromArgb(0, 255, 127) }
+    look  = @{ Name = 'المظهر والمستكشف';            Tile = [Drawing.Color]::FromArgb(0, 30, 10);  Accent = [Drawing.Color]::FromArgb(50, 205, 50) }
+    sys   = @{ Name = 'النظام والخصوصية والأداء';    Tile = [Drawing.Color]::FromArgb(2, 42, 22);   Accent = [Drawing.Color]::FromArgb(0, 250, 154) }
+    net   = @{ Name = 'الشبكة والإنترنت';            Tile = [Drawing.Color]::FromArgb(0, 38, 6);  Accent = [Drawing.Color]::FromArgb(173, 255, 47) }
+    perf  = @{ Name = 'الأداء وبدء التشغيل والتحديثات'; Tile = [Drawing.Color]::FromArgb(8, 40, 16); Accent = [Drawing.Color]::FromArgb(0, 255, 65) }
+    comf  = @{ Name = 'اللغة والوقت والدخول';         Tile = [Drawing.Color]::FromArgb(0, 36, 24);   Accent = [Drawing.Color]::FromArgb(57, 255, 20) }
+    fix   = @{ Name = 'الصيانة والإصلاح';            Tile = [Drawing.Color]::FromArgb(4, 32, 12);  Accent = [Drawing.Color]::FromArgb(0, 230, 118) }
+    boot  = @{ Name = 'إعادة التشغيل الخاصة';         Tile = [Drawing.Color]::FromArgb(0, 46, 14);   Accent = [Drawing.Color]::FromArgb(124, 252, 0) }
+    feat  = @{ Name = 'ميزات ويندوز';                 Tile = [Drawing.Color]::FromArgb(6, 30, 18);  Accent = [Drawing.Color]::FromArgb(0, 255, 127) }
+    quick = @{ Name = 'اختصارات سريعة';               Tile = [Drawing.Color]::FromArgb(0, 40, 20);   Accent = [Drawing.Color]::FromArgb(50, 205, 50) }
+    kbd   = @{ Name = 'اختصارات وأوامر مفيدة';      Tile = [Drawing.Color]::FromArgb(2, 36, 10);   Accent = [Drawing.Color]::FromArgb(0, 250, 154) }
+    lic   = @{ Name = 'التفعيل ونسخة ويندوز';        Tile = [Drawing.Color]::FromArgb(0, 34, 16);  Accent = [Drawing.Color]::FromArgb(173, 255, 47) }
+    tools = @{ Name = 'أدوات الجهاز';                       Tile = [Drawing.Color]::FromArgb(4, 44, 10);  Accent = [Drawing.Color]::FromArgb(0, 255, 65) }
 }
 
 # ---------------- المهام ----------------
@@ -979,13 +979,13 @@ else { takeown /f "$p" | Out-Null; icacls "$p" /grant '*S-1-5-32-544:F' /c /q | 
 )
 
 # ---------------- الألوان والخطوط ----------------
-$cBg    = [Drawing.Color]::FromArgb(15, 23, 42)
-$cHead  = [Drawing.Color]::FromArgb(30, 41, 59)
-$cRun   = [Drawing.Color]::FromArgb(161, 98, 7)
-$cOk    = [Drawing.Color]::FromArgb(21, 128, 61)
-$cErr   = [Drawing.Color]::FromArgb(185, 28, 28)
-$cText  = [Drawing.Color]::White
-$cSub   = [Drawing.Color]::FromArgb(203, 213, 225)
+$cBg    = [Drawing.Color]::FromArgb(0, 0, 0)
+$cHead  = [Drawing.Color]::FromArgb(0, 18, 6)
+$cRun   = [Drawing.Color]::FromArgb(110, 110, 0)
+$cOk    = [Drawing.Color]::FromArgb(0, 120, 40)
+$cErr   = [Drawing.Color]::FromArgb(130, 0, 0)
+$cText  = [Drawing.Color]::FromArgb(0, 255, 65)
+$cSub   = [Drawing.Color]::FromArgb(0, 175, 50)
 $fIcon  = New-Object Drawing.Font('Segoe MDL2 Assets', 15)
 $fTitle = New-Object Drawing.Font('Segoe UI', 9.5, [Drawing.FontStyle]::Bold)
 $fDesc  = New-Object Drawing.Font('Segoe UI', 8)
@@ -1009,23 +1009,28 @@ $form.TopMost = $true
 
 # --- الرأس ---
 $head = New-Object Windows.Forms.Panel
-$head.Dock = 'Top'; $head.Height = 62; $head.BackColor = $cHead
+$head.Dock = 'Top'; $head.Height = 80; $head.BackColor = $cHead
 $head.Padding = New-Object Windows.Forms.Padding(20, 4, 20, 4)
 $hTitle = New-Object Windows.Forms.Label
 $hTitle.Text = 'لوحة إعدادات ويندوز'
-$hTitle.Font = New-Object Drawing.Font('Segoe UI', 15, [Drawing.FontStyle]::Bold)
-$hTitle.ForeColor = $cText; $hTitle.Dock = 'Top'; $hTitle.Height = 32; $hTitle.TextAlign = 'MiddleLeft'
+$hTitle.Font = New-Object Drawing.Font('Segoe UI', 16, [Drawing.FontStyle]::Bold)
+$hTitle.ForeColor = $cText; $hTitle.Dock = 'Top'; $hTitle.Height = 40; $hTitle.TextAlign = 'MiddleLeft'
 $os = Get-CimInstance Win32_OperatingSystem
 $hSub = New-Object Windows.Forms.Label
 $hSub.Text = "$($os.Caption)  ·  Build $($os.BuildNumber)  ·  الجهاز: $env:COMPUTERNAME"
-$hSub.ForeColor = $cSub; $hSub.Dock = 'Top'; $hSub.Height = 20; $hSub.TextAlign = 'MiddleLeft'
-$hSign = New-Object Windows.Forms.Label
-$hSign.Text = 'H.sefrani'
-$hSign.Font = New-Object Drawing.Font('Segoe UI', 14, ([Drawing.FontStyle]::Bold -bor [Drawing.FontStyle]::Italic))
-$hSign.ForeColor = [Drawing.Color]::FromArgb(96, 165, 250)
-$hSign.AutoSize = $true; $hSign.RightToLeft = 'No'
-$hSign.Location = New-Object Drawing.Point(22, 16)
-$head.Controls.Add($hSign)
+$hSub.ForeColor = $cSub; $hSub.Dock = 'Top'; $hSub.Height = 26; $hSub.TextAlign = 'MiddleLeft'
+$sig = @(
+    @{ T = 'H.sefrani';            F = (New-Object Drawing.Font('Consolas', 15, [Drawing.FontStyle]::Bold)); C = [Drawing.Color]::FromArgb(0, 255, 65); Y = 4 }
+    @{ T = 'حسين سفراني · ابو كرمو'; F = (New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Bold));  C = [Drawing.Color]::FromArgb(0, 210, 60); Y = 32 }
+    @{ T = 'hosean1989@msn.com';   F = (New-Object Drawing.Font('Consolas', 9.5));                            C = [Drawing.Color]::FromArgb(0, 170, 50); Y = 56 }
+)
+foreach ($x in $sig) {
+    $l = New-Object Windows.Forms.Label
+    $l.Text = $x.T; $l.Font = $x.F; $l.ForeColor = $x.C; $l.AutoSize = $true
+    $l.RightToLeft = 'No'; $l.Location = New-Object Drawing.Point(22, $x.Y)
+    if ($x.T -like '*@*') { $l.Cursor = 'Hand'; $l.Add_Click({ Start-Process 'mailto:hosean1989@msn.com' }) }
+    $head.Controls.Add($l)
+}
 $head.Controls.Add($hSub)
 $head.Controls.Add($hTitle)
 
@@ -1033,7 +1038,7 @@ $head.Controls.Add($hTitle)
 $log = New-Object Windows.Forms.TextBox
 $log.Multiline = $true; $log.ReadOnly = $true; $log.ScrollBars = 'Vertical'
 $log.Dock = 'Bottom'; $log.Height = 80; $log.BorderStyle = 'None'
-$log.BackColor = [Drawing.Color]::FromArgb(2, 6, 23); $log.ForeColor = $cSub
+$log.BackColor = [Drawing.Color]::FromArgb(0, 8, 2); $log.ForeColor = $cSub
 $log.Font = New-Object Drawing.Font('Consolas', 9)
 function Write-Log($msg) { $log.AppendText("[$(Get-Date -Format HH:mm:ss)] $msg`r`n") }
 
@@ -1207,15 +1212,15 @@ function New-BarButton($text, $w, $color, $action) {
     $bb = New-Object Windows.Forms.Button
     $bb.Text = $text; $bb.Size = New-Object Drawing.Size($w, 34)
     $bb.Margin = New-Object Windows.Forms.Padding(4, 0, 4, 0)
-    $bb.FlatStyle = 'Flat'; $bb.FlatAppearance.BorderSize = 0
+    $bb.FlatStyle = 'Flat'; $bb.FlatAppearance.BorderSize = 1; $bb.FlatAppearance.BorderColor = $cSub
     $bb.BackColor = $color; $bb.ForeColor = $cText; $bb.Font = $fBtn
     $bb.Cursor = 'Hand'
     $bb.Add_Click($action)
     $bar.Controls.Add($bb)
 }
 
-New-BarButton '▶  تطبيق الأساسية (1 → 7)' 210 ([Drawing.Color]::FromArgb(37, 99, 235)) { Invoke-Group 'main' 'المهام الأساسية' }
-New-BarButton 'تنظيف شامل' 140 ([Drawing.Color]::FromArgb(190, 18, 60)) { Invoke-Group 'clean' 'التنظيف' }
+New-BarButton '▶  تطبيق الأساسية (1 → 7)' 210 ([Drawing.Color]::FromArgb(0, 38, 12)) { Invoke-Group 'main' 'المهام الأساسية' }
+New-BarButton 'تنظيف شامل' 140 ([Drawing.Color]::FromArgb(10, 40, 10)) { Invoke-Group 'clean' 'التنظيف' }
 $favMenu = New-Object Windows.Forms.ContextMenuStrip
 $favMenu.RightToLeft = 'Yes'
 [void]$favMenu.Items.Add('تنفيذ المفضلة', $null, {
@@ -1242,8 +1247,8 @@ $favMenu.RightToLeft = 'Yes'
     }
 })
 [void]$favMenu.Items.Add('مسح المفضلة', $null, { $Favs.Clear(); Save-Favs; foreach ($x in $tiles) { Update-FavMark $x }; Write-Log 'مُسحت المفضلة.' })
-New-BarButton '★  المفضلة ▾' 130 ([Drawing.Color]::FromArgb(202, 138, 4)) { $favMenu.Show($this, 0, $this.Height) }
-New-BarButton 'إعادة تشغيل الكمبيوتر' 170 ([Drawing.Color]::FromArgb(71, 85, 105)) {
+New-BarButton '★  المفضلة ▾' 130 ([Drawing.Color]::FromArgb(10, 40, 10)) { $favMenu.Show($this, 0, $this.Height) }
+New-BarButton 'إعادة تشغيل الكمبيوتر' 170 ([Drawing.Color]::FromArgb(0, 50, 16)) {
     if ([Windows.Forms.MessageBox]::Show('إعادة تشغيل الكمبيوتر الآن؟', 'تأكيد', 'YesNo', 'Question') -eq 'Yes') { Restart-Computer -Force }
 }
 $progress = New-Object Windows.Forms.ProgressBar
