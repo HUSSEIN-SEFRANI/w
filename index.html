@@ -161,7 +161,7 @@ $fDesc  = New-Object Drawing.Font('Segoe UI', 8.5)
 
 # ---------------- النافذة ----------------
 $form = New-Object Windows.Forms.Form
-$form.Text = 'لوحة إعدادات ويندوز'
+$form.Text = 'لوحة إعدادات ويندوز — H.sefrani'
 $form.ClientSize = New-Object Drawing.Size(965, 760)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = $cBg
@@ -184,6 +184,13 @@ $os = Get-CimInstance Win32_OperatingSystem
 $hSub = New-Object Windows.Forms.Label
 $hSub.Text = "$($os.Caption)  ·  Build $($os.BuildNumber)  ·  الجهاز: $env:COMPUTERNAME"
 $hSub.ForeColor = $cSub; $hSub.Dock = 'Top'; $hSub.Height = 24; $hSub.TextAlign = 'MiddleLeft'
+$hSign = New-Object Windows.Forms.Label
+$hSign.Text = 'H.sefrani'
+$hSign.Font = New-Object Drawing.Font('Segoe UI', 15, [Drawing.FontStyle]::Bold -bor [Drawing.FontStyle]::Italic)
+$hSign.ForeColor = [Drawing.Color]::FromArgb(96, 165, 250)
+$hSign.AutoSize = $true; $hSign.RightToLeft = 'No'
+$hSign.Location = New-Object Drawing.Point(24, 22)
+$head.Controls.Add($hSign)
 $head.Controls.Add($hSub)
 $head.Controls.Add($hTitle)
 
