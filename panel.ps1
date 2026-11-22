@@ -1,5 +1,5 @@
 # ============================================================
-#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v4  —  H.sefrani
+#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v5  —  H.sefrani
 #  التشغيل:  irm is.gd/Sefrani | iex
 #  ملاحظة: مع RightToLeft = Yes يعكس ويندوز محاذاة النص، لذا Left تعني يمين الشاشة.
 # ============================================================
@@ -234,6 +234,24 @@ $ServiceCatalog = [ordered]@{
     'فهرسة البحث (يبطئ الأجهزة الضعيفة)' = 'WSearch'
 }
 
+
+function Confirm-Action($msg) {
+    if ([Windows.Forms.MessageBox]::Show($msg, 'تأكيد', 'YesNo', 'Warning') -ne 'Yes') { throw 'أُلغي' }
+}
+function Get-UserFolders {
+    $dl = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders' -ErrorAction SilentlyContinue).'{374DE290-123F-4565-9164-39C4925E467B}'
+    if ($dl) { $dl = [Environment]::ExpandEnvironmentVariables($dl) } else { $dl = Join-Path $env:USERPROFILE 'Downloads' }
+    [ordered]@{
+        Desktop   = [Environment]::GetFolderPath('Desktop')
+        Documents = [Environment]::GetFolderPath('MyDocuments')
+        Downloads = $dl
+        Pictures  = [Environment]::GetFolderPath('MyPictures')
+        Videos    = [Environment]::GetFolderPath('MyVideos')
+        Music     = [Environment]::GetFolderPath('MyMusic')
+    }
+}
+function Start-Console($cmd) { Start-Process powershell -ArgumentList '-NoExit', '-Command', $cmd }
+
 # ---------------- المفضلة ----------------
 $FavFile = "$env:ProgramData\HSefrani\favorites.txt"
 $Favs = New-Object System.Collections.Generic.HashSet[string]
@@ -243,6 +261,7 @@ function Save-Favs { New-Item (Split-Path $FavFile) -ItemType Directory -Force |
 # ---------------- الأقسام ----------------
 $Sections = [ordered]@{
     main  = @{ Name = 'المهام الأساسية — بالترتيب'; Tile = [Drawing.Color]::FromArgb(30, 64, 120);  Accent = [Drawing.Color]::FromArgb(96, 165, 250) }
+    bak   = @{ Name = 'النسخ الاحتياطي والنقل (قبل وبعد الفورمات)'; Tile = [Drawing.Color]::FromArgb(14, 90, 90); Accent = [Drawing.Color]::FromArgb(94, 234, 212) }
     apps  = @{ Name = 'تنزيل البرامج';               Tile = [Drawing.Color]::FromArgb(22, 90, 60);   Accent = [Drawing.Color]::FromArgb(74, 222, 128) }
     clean = @{ Name = 'التنظيف والكاش';              Tile = [Drawing.Color]::FromArgb(120, 40, 60);  Accent = [Drawing.Color]::FromArgb(251, 113, 133) }
     look  = @{ Name = 'المظهر والمستكشف';            Tile = [Drawing.Color]::FromArgb(76, 45, 110);  Accent = [Drawing.Color]::FromArgb(192, 132, 252) }
@@ -250,6 +269,10 @@ $Sections = [ordered]@{
     net   = @{ Name = 'الشبكة والإنترنت';            Tile = [Drawing.Color]::FromArgb(15, 70, 110);  Accent = [Drawing.Color]::FromArgb(56, 189, 248) }
     perf  = @{ Name = 'الأداء وبدء التشغيل والتحديثات'; Tile = [Drawing.Color]::FromArgb(80, 30, 100); Accent = [Drawing.Color]::FromArgb(232, 121, 249) }
     comf  = @{ Name = 'اللغة والوقت والدخول';         Tile = [Drawing.Color]::FromArgb(60, 70, 25);   Accent = [Drawing.Color]::FromArgb(163, 230, 53) }
+    fix   = @{ Name = 'الصيانة والإصلاح';            Tile = [Drawing.Color]::FromArgb(110, 30, 30);  Accent = [Drawing.Color]::FromArgb(248, 113, 113) }
+    boot  = @{ Name = 'إعادة التشغيل الخاصة';         Tile = [Drawing.Color]::FromArgb(55, 55, 70);   Accent = [Drawing.Color]::FromArgb(165, 180, 252) }
+    feat  = @{ Name = 'ميزات ويندوز';                 Tile = [Drawing.Color]::FromArgb(25, 60, 100);  Accent = [Drawing.Color]::FromArgb(125, 211, 252) }
+    quick = @{ Name = 'اختصارات سريعة';               Tile = [Drawing.Color]::FromArgb(40, 48, 62);   Accent = [Drawing.Color]::FromArgb(226, 232, 240) }
     lic   = @{ Name = 'التفعيل ونسخة ويندوز';        Tile = [Drawing.Color]::FromArgb(100, 80, 15);  Accent = [Drawing.Color]::FromArgb(250, 204, 21) }
     tools = @{ Name = 'أدوات الجهاز';                       Tile = [Drawing.Color]::FromArgb(110, 60, 20);  Accent = [Drawing.Color]::FromArgb(251, 146, 60) }
 }
@@ -598,7 +621,141 @@ $Tasks = @(
     @{ G = 'comf'; I = 0xE72E; T = 'الدخول بدون كلمة سر'; D = 'يفتح netplwiz — أزل علامة الاختيار'
        S = { Set-Reg 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device' 'DevicePasswordLessBuildVersion' 0
              Start-Process netplwiz
-             Write-Log '  في النافذة: أزل علامة "Users must enter a user name and password" ثم OK وأدخل كلمة السر مرة واحدة.' } }
+             Write-Log '  في النافذة: أزل علامة "Users must enter a user name and password" ثم OK وأدخل كلمة السر مرة واحدة.' } },
+    # ===== النسخ الاحتياطي والنقل =====
+    @{ G = 'bak'; I = 0xE8F1; T = 'نسخ ملفاتي احتياطياً'; D = 'سطح المكتب · المستندات · التنزيلات · الصور'
+       S = { $d = Pick-Folder 'اختر مكان النسخة الاحتياطية (مثلاً فلاشة أو هارد خارجي):'
+             $root = Join-Path $d "Backup_$env:COMPUTERNAME"
+             $f = Get-UserFolders
+             $cmds = foreach ($k in $f.Keys) { "robocopy '$($f[$k])' '$root\$k' /E /R:1 /W:1 /XJ /MT:16 /NFL /NDL" }
+             Start-Console (($cmds -join '; ') + "; Write-Host ''; Write-Host 'DONE: $root' -ForegroundColor Green") } },
+
+    @{ G = 'bak'; I = 0xE777; T = 'إرجاع ملفاتي'; D = 'من مجلد Backup_… إلى أماكنها'
+       S = { $src = Pick-Folder 'اختر مجلد النسخة الاحتياطية (Backup_…):'
+             $f = Get-UserFolders
+             $cmds = foreach ($k in $f.Keys) { if (Test-Path "$src\$k") { "robocopy '$src\$k' '$($f[$k])' /E /R:1 /W:1 /XJ /MT:16 /NFL /NDL" } }
+             if (-not $cmds) { throw 'المجلد لا يحتوي على نسخة صالحة' }
+             Start-Console (($cmds -join '; ') + "; Write-Host ''; Write-Host 'DONE' -ForegroundColor Green") } },
+
+    @{ G = 'bak'; I = 0xE8F4; T = 'حفظ قائمة برامجي'; D = 'كل البرامج المثبّتة في ملف'
+       S = { $sd = New-Object Windows.Forms.SaveFileDialog
+             $sd.Filter = 'قائمة البرامج|*.json'; $sd.FileName = "Apps_$env:COMPUTERNAME.json"
+             if ($sd.ShowDialog($form) -ne 'OK') { throw 'أُلغي' }
+             Start-Console "winget export -o '$($sd.FileName)' --accept-source-agreements; Write-Host 'DONE' -ForegroundColor Green" } },
+
+    @{ G = 'bak'; I = 0xE896; T = 'تثبيت برامجي من القائمة'; D = 'على الجهاز الجديد'
+       S = { $od = New-Object Windows.Forms.OpenFileDialog
+             $od.Filter = 'قائمة البرامج|*.json'
+             if ($od.ShowDialog($form) -ne 'OK') { throw 'أُلغي' }
+             Start-Console "winget import -i '$($od.FileName)' --accept-package-agreements --accept-source-agreements --ignore-unavailable" } },
+
+    # ===== مكتبات التشغيل =====
+    @{ G = 'apps'; I = 0xE943; T = '.NET Framework 3.5'; D = 'للبرامج والألعاب القديمة'
+       S = { Start-Console 'DISM /Online /Enable-Feature /FeatureName:NetFx3 /All /NoRestart' } },
+
+    @{ G = 'apps'; I = 0xE943; T = 'Visual C++ (كل النسخ)'; D = '2005 → 2015+ · x86 و x64'
+       S = { $ids = 'Microsoft.VCRedist.2005.x86', 'Microsoft.VCRedist.2005.x64', 'Microsoft.VCRedist.2008.x86', 'Microsoft.VCRedist.2008.x64',
+                    'Microsoft.VCRedist.2010.x86', 'Microsoft.VCRedist.2010.x64', 'Microsoft.VCRedist.2012.x86', 'Microsoft.VCRedist.2012.x64',
+                    'Microsoft.VCRedist.2013.x86', 'Microsoft.VCRedist.2013.x64', 'Microsoft.VCRedist.2015+.x86', 'Microsoft.VCRedist.2015+.x64'
+             Start-Console (($ids | ForEach-Object { "winget install --id $_ -e --accept-source-agreements --accept-package-agreements" }) -join '; ') } },
+
+    @{ G = 'apps'; I = 0xE7FC; T = 'DirectX'; D = 'مكتبات الألعاب'
+       S = { Start-Console 'winget install --id Microsoft.DirectX -e --accept-source-agreements --accept-package-agreements' } },
+
+    # ===== الصيانة والإصلاح =====
+    @{ G = 'fix'; I = 0xEBA7; T = 'تقرير البطارية'; D = 'تاريخ الشحن ونسبة التآكل'
+       S = { $out = Join-Path ([Environment]::GetFolderPath('Desktop')) 'battery-report.html'
+             powercfg /batteryreport /output "$out" | Out-Null
+             if ($LASTEXITCODE -or -not (Test-Path $out)) { throw 'لا توجد بطارية في هذا الجهاز' }
+             Start-Process $out } },
+
+    @{ G = 'fix'; I = 0xEDA2; T = 'فحص الهارد (CHKDSK)'; D = 'يعمل عند إعادة التشغيل القادمة'
+       S = { cmd /c "echo Y| chkdsk $env:SystemDrive /f /r" | Out-Null
+             Write-Log '  سيُفحص القرص عند إعادة التشغيل القادمة (قد يستغرق وقتاً طويلاً).' } },
+
+    @{ G = 'fix'; I = 0xE749; T = 'إصلاح الطابعة العالقة'; D = 'مسح أوامر الطباعة المتوقفة'
+       S = { Stop-Service Spooler -Force
+             Clear-Path "$env:windir\System32\spool\PRINTERS\*"
+             Start-Service Spooler } },
+
+    @{ G = 'fix'; I = 0xE719; T = 'إصلاح متجر مايكروسوفت'; D = 'إعادة ضبط الكاش (wsreset)'
+       S = { Start-Process wsreset.exe } },
+
+    @{ G = 'fix'; I = 0xE83D; T = 'فحص فيروسات سريع'; D = 'Windows Defender'
+       S = { Start-Console 'Update-MpSignature; Start-MpScan -ScanType QuickScan; Get-MpThreatDetection | Format-List' } },
+
+    @{ G = 'fix'; I = 0xE83D; T = 'فحص فيروسات كامل'; D = 'قد يستغرق ساعة أو أكثر'
+       S = { Start-Console 'Update-MpSignature; Start-MpScan -ScanType FullScan; Get-MpThreatDetection | Format-List' } },
+
+    # ===== إعادة التشغيل الخاصة =====
+    @{ G = 'boot'; I = 0xE7E8; T = 'إعادة التشغيل إلى BIOS'; D = 'UEFI — الآن مباشرة'
+       S = { Confirm-Action 'سيُعاد تشغيل الجهاز الآن والدخول إلى BIOS/UEFI. احفظ عملك أولاً. متابعة؟'
+             shutdown /r /fw /t 0
+             if ($LASTEXITCODE) { throw 'الجهاز لا يدعم الدخول المباشر (ليس UEFI) — استعمل F2 / Del عند التشغيل' } } },
+
+    @{ G = 'boot'; I = 0xE7BA; T = 'الدخول إلى الوضع الآمن'; D = 'Safe Mode — يعيد التشغيل الآن'
+       S = { Confirm-Action "سيُعاد تشغيل الجهاز إلى الوضع الآمن.`nللخروج منه شغّل اللوحة من جديد واضغط 'الخروج من الوضع الآمن'. متابعة؟"
+             bcdedit /set '{current}' safeboot minimal | Out-Null
+             shutdown /r /t 0 } },
+
+    @{ G = 'boot'; I = 0xE72C; T = 'الخروج من الوضع الآمن'; D = 'العودة إلى التشغيل العادي'
+       S = { bcdedit /deletevalue '{current}' safeboot | Out-Null
+             Confirm-Action 'تم. إعادة التشغيل الآن إلى الوضع العادي؟'
+             shutdown /r /t 0 } },
+
+    @{ G = 'boot'; I = 0xE90F; T = 'خيارات الإقلاع المتقدمة'; D = 'استعادة · إصلاح · سطر أوامر'
+       S = { Confirm-Action 'سيُعاد تشغيل الجهاز إلى شاشة الخيارات المتقدمة. متابعة؟'
+             shutdown /r /o /t 0 } },
+
+    # ===== ميزات ويندوز =====
+    @{ G = 'feat'; I = 0xE7EF; T = 'Windows Sandbox'; D = 'ويندوز معزول للتجربة (Pro فقط)'
+       S = { Enable-WindowsOptionalFeature -Online -FeatureName 'Containers-DisposableClientVM' -All -NoRestart | Out-Null
+             Write-Log '  أعد التشغيل ثم ابحث عن Windows Sandbox في قائمة ابدأ.' } },
+
+    @{ G = 'feat'; I = 0xE756; T = 'WSL (لينكس)'; D = 'يثبّت Ubuntu'
+       S = { Start-Console 'wsl --install' } },
+
+    @{ G = 'feat'; I = 0xE7F4; T = 'Hyper-V'; D = 'الأجهزة الافتراضية (Pro فقط)'
+       S = { Enable-WindowsOptionalFeature -Online -FeatureName 'Microsoft-Hyper-V' -All -NoRestart | Out-Null
+             Write-Log '  أعد التشغيل لتفعيل Hyper-V.' } },
+
+    @{ G = 'feat'; I = 0xE945; T = 'Ultimate Performance'; D = 'أقوى خطة طاقة'
+       S = { $o = powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 | Out-String
+             if ($o -match '([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})') { powercfg -setactive $Matches[1] }
+             else { throw 'الخطة غير متوفرة في هذه النسخة' } } },
+
+    # ===== لمسات صغيرة =====
+    @{ G = 'look'; I = 0xE823; T = 'الثواني في الساعة'; D = 'في شريط المهام'
+       S = { Set-Reg $Adv 'ShowSecondsInSystemClock' 1 } },
+
+    @{ G = 'comf'; I = 0xE765; T = 'إيقاف Sticky Keys'; D = 'رسالة Shift خمس مرات'
+       S = { Set-Reg 'HKCU:\Control Panel\Accessibility\StickyKeys' 'Flags' '506' 'String'
+             Set-Reg 'HKCU:\Control Panel\Accessibility\ToggleKeys' 'Flags' '58' 'String'
+             Set-Reg 'HKCU:\Control Panel\Accessibility\Keyboard Response' 'Flags' '122' 'String' } },
+
+    @{ G = 'comf'; I = 0xE962; T = 'إيقاف تسريع الماوس'; D = 'حركة أدق للرسم والألعاب'
+       S = { $m = 'HKCU:\Control Panel\Mouse'
+             Set-Reg $m 'MouseSpeed' '0' 'String'; Set-Reg $m 'MouseThreshold1' '0' 'String'; Set-Reg $m 'MouseThreshold2' '0' 'String' } },
+
+    @{ G = 'look'; I = 0xE713; T = 'مجلد God Mode'; D = 'كل الإعدادات على سطح المكتب'
+       S = { New-Item -ItemType Directory -Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'GodMode.{ED7BA470-8E54-465E-825C-99712043E01C}') -Force | Out-Null } },
+
+    # ===== اختصارات سريعة =====
+    @{ G = 'quick'; I = 0xE7EF; T = 'محرر السجل'; D = 'regedit'; S = { Start-Process regedit } },
+    @{ G = 'quick'; I = 0xE713; T = 'إعدادات الإقلاع'; D = 'msconfig'; S = { Start-Process msconfig } },
+    @{ G = 'quick'; I = 0xE912; T = 'الخدمات'; D = 'services.msc'; S = { Start-Process services.msc } },
+    @{ G = 'quick'; I = 0xEDA2; T = 'إدارة الأقراص'; D = 'diskmgmt.msc'; S = { Start-Process diskmgmt.msc } },
+    @{ G = 'quick'; I = 0xE7F4; T = 'إدارة الكمبيوتر'; D = 'compmgmt.msc'; S = { Start-Process compmgmt.msc } },
+    @{ G = 'quick'; I = 0xE9D9; T = 'مدير المهام'; D = 'taskmgr'; S = { Start-Process taskmgr } },
+    @{ G = 'quick'; I = 0xE71D; T = 'البرامج المثبّتة'; D = 'appwiz.cpl'; S = { Start-Process appwiz.cpl } },
+    @{ G = 'quick'; I = 0xE968; T = 'اتصالات الشبكة'; D = 'ncpa.cpl'; S = { Start-Process ncpa.cpl } },
+    @{ G = 'quick'; I = 0xE770; T = 'خصائص النظام'; D = 'sysdm.cpl'; S = { Start-Process sysdm.cpl } },
+    @{ G = 'quick'; I = 0xE80F; T = 'لوحة التحكم'; D = 'control'; S = { Start-Process control } },
+    @{ G = 'quick'; I = 0xE8F1; T = 'سياسات المجموعة'; D = 'gpedit.msc (Pro)'; S = { Start-Process gpedit.msc } },
+    @{ G = 'quick'; I = 0xE81C; T = 'عارض الأحداث'; D = 'eventvwr.msc'; S = { Start-Process eventvwr.msc } },
+    @{ G = 'quick'; I = 0xE946; T = 'معلومات النظام'; D = 'msinfo32'; S = { Start-Process msinfo32 } },
+    @{ G = 'quick'; I = 0xE9D2; T = 'مراقب الموارد'; D = 'resmon'; S = { Start-Process resmon } },
+    @{ G = 'quick'; I = 0xE756; T = 'موجه الأوامر (مسؤول)'; D = 'cmd'; S = { Start-Process cmd -Verb RunAs } }
 
 )
 
