@@ -272,6 +272,33 @@ function Remove-CtxMenu($sub) { try { [Microsoft.Win32.Registry]::ClassesRoot.De
 $CtxKeys = '*\shell\HS_TakeOwn', 'Directory\shell\HS_TakeOwn', 'Directory\shell\HS_PSAdmin', 'Directory\Background\shell\HS_PSAdmin',
            '*\shell\HS_CopyPath', 'Directory\shell\HS_CopyPath'
 
+
+# ---------- تثبيت أوفيس عبر Office Deployment Tool (رسمي، بدون تسجيل دخول) ----------
+function Install-Office($productId, $lang) {
+    $dir = Join-Path $env:TEMP 'HSOffice'
+    New-Item $dir -ItemType Directory -Force | Out-Null
+    $setup = Join-Path $dir 'setup.exe'
+    if (-not (Test-Path $setup)) {
+        Invoke-WebRequest 'https://officecdn.microsoft.com/pr/wsus/setup.exe' -OutFile $setup -UseBasicParsing
+    }
+    $xml = @"
+<Configuration>
+  <Add OfficeClientEdition="64" Channel="Current">
+    <Product ID="$productId">
+      <Language ID="$lang" />
+      <ExcludeApp ID="Groove" />
+      <ExcludeApp ID="Lync" />
+    </Product>
+  </Add>
+  <Display Level="Full" AcceptEULA="TRUE" />
+</Configuration>
+"@
+    $cfg = Join-Path $dir "config-$productId-$lang.xml"
+    Set-Content -Path $cfg -Value $xml -Encoding UTF8
+    Start-Process $setup -ArgumentList "/configure `"$cfg`"" -WorkingDirectory $dir
+    Write-Log "  يُثبَّت أوفيس ($productId · $lang). بعد التثبيت: افتح Word وسجّل الدخول بحساب صاحب الاشتراك."
+}
+
 # ---------------- المفضلة ----------------
 $FavFile = "$env:ProgramData\HSefrani\favorites.txt"
 $Favs = New-Object System.Collections.Generic.HashSet[string]
@@ -313,24 +340,36 @@ $Tasks = @(
     @{ G = 'ext'; I = 0xE896; T = 'تنزيل ويندوز 10 (رسمي)'; D = 'Media Creation Tool من مايكروسوفت'
        S = { Start-Process 'https://www.microsoft.com/software-download/windows10' } },
 
-    @{ G = 'ext'; I = 0xE8A5; T = 'تنزيل وتثبيت أوفيس'; D = 'بدون تسجيل دخول — اختر النسخة واللغة'
+    @{ G = 'ext'; I = 0xE8A5; T = 'أوفيس 365 — العربية'; D = 'تنزيل وتثبيت بدون تسجيل دخول (ar-sa)'
+       S = { Install-Office 'O365HomePremRetail' 'ar-sa' } },
+
+    @{ G = 'ext'; I = 0xE8A5; T = 'أوفيس 365 — الفرنسية'; D = 'تنزيل وتثبيت بدون تسجيل دخول (fr-fr)'
+       S = { Install-Office 'O365HomePremRetail' 'fr-fr' } },
+
+    @{ G = 'ext'; I = 0xE8A5; T = 'أوفيس 365 — الإنكليزية'; D = 'تنزيل وتثبيت بدون تسجيل دخول (en-us)'
+       S = { Install-Office 'O365HomePremRetail' 'en-us' } },
+
+    @{ G = 'ext'; I = 0xE8A5; T = 'أوفيس 365 — التركية'; D = 'تنزيل وتثبيت بدون تسجيل دخول (tr-tr)'
+       S = { Install-Office 'O365HomePremRetail' 'tr-tr' } },
+
+    @{ G = 'ext'; I = 0xE8A5; T = 'أوفيس 365 — السويدية'; D = 'تنزيل وتثبيت بدون تسجيل دخول (sv-se)'
+       S = { Install-Office 'O365HomePremRetail' 'sv-se' } },
+
+    @{ G = 'ext'; I = 0xE8A5; T = 'أوفيس — نسخة ولغة أخرى'; D = '2024 · 2021 · 2019 · Business …'
        S = { $prod = [ordered]@{
-                 'Microsoft 365 (Personal / Family)'  = 'O365HomePremRetail'
-                 'Microsoft 365 (Business)'           = 'O365BusinessRetail'
-                 'Microsoft 365 Apps (Enterprise)'    = 'O365ProPlusRetail'
-                 'Office 2024 Pro Plus'        = 'ProPlus2024Retail'
-                 'Office 2024 Home & Business' = 'HomeBusiness2024Retail'
-                 'Office 2021 Pro Plus'        = 'ProPlus2021Retail'
-                 'Office 2019 Pro Plus'        = 'ProPlus2019Retail'
+                 'Microsoft 365 (Personal / Family)' = 'O365HomePremRetail'
+                 'Microsoft 365 (Business)'          = 'O365BusinessRetail'
+                 'Microsoft 365 Apps (Enterprise)'   = 'O365ProPlusRetail'
+                 'Office 2024 Pro Plus'              = 'ProPlus2024Retail'
+                 'Office 2024 Home & Business'       = 'HomeBusiness2024Retail'
+                 'Office 2021 Pro Plus'              = 'ProPlus2021Retail'
+                 'Office 2019 Pro Plus'              = 'ProPlus2019Retail'
              }
-             $lang = [ordered]@{ 'العربية' = 'ar-sa'; 'Français' = 'fr-fr'; 'English' = 'en-us'; 'Nederlands' = 'nl-nl'; 'Deutsch' = 'de-de' }
+             $lang = [ordered]@{ 'العربية' = 'ar-sa'; 'Français' = 'fr-fr'; 'English' = 'en-us'; 'Türkçe' = 'tr-tr'; 'Svenska' = 'sv-se'
+                                 'Nederlands' = 'nl-nl'; 'Deutsch' = 'de-de'; 'Español' = 'es-es'; 'Italiano' = 'it-it' }
              $p = (Show-Picker 'اختر نسخة أوفيس' ([string[]]@($prod.get_Keys())) 'التالي' -Single)[0]
              $l = (Show-Picker 'اختر لغة أوفيس' ([string[]]@($lang.get_Keys())) 'تنزيل وتثبيت' -Single)[0]
-             $url = "https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=$($prod[$p])&platform=x64&language=$($lang[$l])&version=O16GA"
-             $exe = Join-Path $env:TEMP 'OfficeSetup.exe'
-             Invoke-WebRequest $url -OutFile $exe -UseBasicParsing
-             Start-Process $exe
-             Write-Log "  يُثبَّت: $p ($l). بعد التثبيت: افتح Word وسجّل الدخول بحساب صاحب الاشتراك." } },
+             Install-Office $prod[$p] $lang[$l] } },
 
     @{ G = 'ext'; I = 0xE88E; T = 'Rufus'; D = 'صنع فلاشة تنصيب من ملف ISO'
        S = { Start-Console 'winget install --id Rufus.Rufus -e --accept-source-agreements --accept-package-agreements' } },
