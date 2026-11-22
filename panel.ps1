@@ -1,5 +1,5 @@
 # ============================================================
-#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v3  —  H.sefrani
+#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v4  —  H.sefrani
 #  التشغيل:  irm is.gd/Sefrani | iex
 #  ملاحظة: مع RightToLeft = Yes يعكس ويندوز محاذاة النص، لذا Left تعني يمين الشاشة.
 # ============================================================
@@ -63,6 +63,183 @@ function Ask($prompt, $title, $default = '') {
 $Adv  = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
 $Srch = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
 
+
+# ---------------- نوافذ مساعدة ----------------
+function Show-Picker($title, [string[]]$items, $okText = 'تنفيذ', [switch]$Single, [string[]]$checked = @()) {
+    if (-not $items -or $items.Count -eq 0) { throw 'لا توجد عناصر لعرضها' }
+    $dlg = New-Object Windows.Forms.Form
+    $dlg.Text = $title
+    $dlg.Size = New-Object Drawing.Size(700, 540)
+    $dlg.StartPosition = 'CenterParent'
+    $dlg.BackColor = $cBg; $dlg.ForeColor = $cText
+    $dlg.RightToLeft = 'Yes'; $dlg.RightToLeftLayout = $true
+    $dlg.Font = New-Object Drawing.Font('Segoe UI', 10)
+    if ($Single) {
+        $list = New-Object Windows.Forms.ListBox
+    } else {
+        $list = New-Object Windows.Forms.CheckedListBox
+        $list.CheckOnClick = $true; $list.MultiColumn = $true; $list.ColumnWidth = 220
+    }
+    $list.Dock = 'Fill'; $list.BackColor = $cHead; $list.ForeColor = $cText; $list.BorderStyle = 'None'
+    $list.RightToLeft = 'No'
+    foreach ($n in $items) {
+        $i = $list.Items.Add($n)
+        if (-not $Single -and $checked -contains $n) { $list.SetItemChecked($i, $true) }
+    }
+    $pb = New-Object Windows.Forms.FlowLayoutPanel
+    $pb.Dock = 'Bottom'; $pb.Height = 52; $pb.Padding = New-Object Windows.Forms.Padding(8)
+    $ok = New-Object Windows.Forms.Button
+    $ok.Text = $okText; $ok.Size = New-Object Drawing.Size(160, 34)
+    $ok.FlatStyle = 'Flat'; $ok.BackColor = [Drawing.Color]::FromArgb(22, 163, 74); $ok.ForeColor = $cText
+    $ok.DialogResult = 'OK'
+    $pb.Controls.Add($ok)
+    if (-not $Single) {
+        $all = New-Object Windows.Forms.Button
+        $all.Text = 'تحديد الكل'; $all.Size = New-Object Drawing.Size(110, 34)
+        $all.FlatStyle = 'Flat'; $all.BackColor = [Drawing.Color]::FromArgb(71, 85, 105); $all.ForeColor = $cText
+        $all.Add_Click({ for ($i = 0; $i -lt $list.Items.Count; $i++) { $list.SetItemChecked($i, $true) } })
+        $pb.Controls.Add($all)
+    }
+    $dlg.Controls.Add($list); $dlg.Controls.Add($pb)
+    $dlg.AcceptButton = $ok
+    if ($dlg.ShowDialog($form) -ne 'OK') { throw 'أُلغي' }
+    if ($Single) { $sel = @($list.SelectedItem) | Where-Object { $_ } } else { $sel = @($list.CheckedItems) }
+    if (-not $sel -or @($sel).Count -eq 0) { throw 'لم يُختر شيء' }
+    [string[]]$sel
+}
+
+function Show-Text($title, $text) {
+    $dlg = New-Object Windows.Forms.Form
+    $dlg.Text = $title
+    $dlg.Size = New-Object Drawing.Size(760, 560)
+    $dlg.StartPosition = 'CenterParent'
+    $dlg.BackColor = $cBg
+    $tb = New-Object Windows.Forms.TextBox
+    $tb.Multiline = $true; $tb.ReadOnly = $true; $tb.ScrollBars = 'Both'; $tb.WordWrap = $false
+    $tb.Dock = 'Fill'; $tb.BorderStyle = 'None'
+    $tb.BackColor = $cHead; $tb.ForeColor = $cText
+    $tb.Font = New-Object Drawing.Font('Consolas', 10)
+    $tb.Text = $text
+    $cp = New-Object Windows.Forms.Button
+    $cp.Text = 'نسخ الكل'; $cp.Dock = 'Bottom'; $cp.Height = 38
+    $cp.FlatStyle = 'Flat'; $cp.BackColor = [Drawing.Color]::FromArgb(37, 99, 235); $cp.ForeColor = $cText
+    $cp.Add_Click({ Set-Clipboard $tb.Text; $cp.Text = '✔ تم النسخ' })
+    $dlg.Controls.Add($tb); $dlg.Controls.Add($cp)
+    [void]$dlg.ShowDialog($form)
+}
+
+function Pick-Folder($desc) {
+    $fb = New-Object Windows.Forms.FolderBrowserDialog
+    $fb.Description = $desc
+    if ($fb.ShowDialog($form) -ne 'OK') { throw 'لم يُختر مجلد' }
+    $fb.SelectedPath
+}
+
+function Get-DeviceReport {
+    $cs  = Get-CimInstance Win32_ComputerSystem
+    $bio = Get-CimInstance Win32_BIOS
+    $bb  = Get-CimInstance Win32_BaseBoard
+    $os  = Get-CimInstance Win32_OperatingSystem
+    $L = New-Object System.Collections.Generic.List[string]
+    $L.Add("== الجهاز ==")
+    $L.Add("الشركة/الموديل : $($cs.Manufacturer) $($cs.Model)")
+    $L.Add("الرقم التسلسلي : $($bio.SerialNumber)")
+    $L.Add("اللوحة الأم    : $($bb.Manufacturer) $($bb.Product)")
+    $L.Add("BIOS           : $($bio.SMBIOSBIOSVersion)  ($($bio.ReleaseDate))")
+    $L.Add("النظام         : $($os.Caption)  Build $($os.BuildNumber)  ($($os.OSArchitecture))")
+    $L.Add("اسم الجهاز     : $env:COMPUTERNAME")
+    $L.Add("")
+    $L.Add("== المعالج ==")
+    Get-CimInstance Win32_Processor | ForEach-Object { $L.Add("$($_.Name.Trim())  —  $($_.NumberOfCores) أنوية / $($_.NumberOfLogicalProcessors) خيوط") }
+    $L.Add("")
+    $L.Add("== الذاكرة (RAM) ==")
+    $L.Add("المجموع: $([Math]::Round($cs.TotalPhysicalMemory / 1GB, 1)) GB")
+    Get-CimInstance Win32_PhysicalMemory | ForEach-Object { $L.Add("  $($_.BankLabel) $($_.DeviceLocator): $([Math]::Round($_.Capacity / 1GB)) GB  $($_.Speed) MHz  $($_.Manufacturer) $($_.PartNumber.Trim())") }
+    $L.Add("")
+    $L.Add("== كرت الشاشة ==")
+    Get-CimInstance Win32_VideoController | ForEach-Object { $L.Add("$($_.Name)  —  تعريف $($_.DriverVersion)") }
+    $L.Add("")
+    $L.Add("== الأقراص ==")
+    try {
+        Get-PhysicalDisk | ForEach-Object { $L.Add("$($_.FriendlyName)  —  $($_.MediaType)  $([Math]::Round($_.Size / 1GB)) GB  —  الصحة: $($_.HealthStatus)") }
+    } catch { Get-CimInstance Win32_DiskDrive | ForEach-Object { $L.Add("$($_.Model)  $([Math]::Round($_.Size / 1GB)) GB  —  $($_.Status)") } }
+    Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | ForEach-Object { $L.Add("  $($_.DeviceID)  فارغ $([Math]::Round($_.FreeSpace / 1GB)) من $([Math]::Round($_.Size / 1GB)) GB") }
+    $bat = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue
+    if ($bat) {
+        $L.Add("")
+        $L.Add("== البطارية ==")
+        $L.Add("الشحن الحالي: $($bat.EstimatedChargeRemaining)%")
+        try {
+            $design = (Get-CimInstance -Namespace root\wmi -ClassName BatteryStaticData -ErrorAction Stop | Select-Object -First 1).DesignedCapacity
+            $full   = (Get-CimInstance -Namespace root\wmi -ClassName BatteryFullChargedCapacity -ErrorAction Stop | Select-Object -First 1).FullChargedCapacity
+            if ($design -gt 0) { $L.Add("صحة البطارية: $([Math]::Round($full * 100 / $design))%  ($full من $design mWh)") }
+        } catch {}
+    }
+    $L.Add("")
+    $L.Add("== الشبكة ==")
+    Get-NetAdapter -Physical -ErrorAction SilentlyContinue | ForEach-Object { $L.Add("$($_.Name): $($_.InterfaceDescription)  —  $($_.Status)  MAC $($_.MacAddress)") }
+    $L -join "`r`n"
+}
+
+# التطبيقات المثبّتة مسبقاً التي يمكن إزالتها
+$BloatCatalog = [ordered]@{
+    'الأخبار (Bing News)'       = 'Microsoft.BingNews'
+    'الطقس (Bing Weather)'      = 'Microsoft.BingWeather'
+    'Get Help'                  = 'Microsoft.GetHelp'
+    'Get Started / Tips'        = 'Microsoft.Getstarted'
+    'Solitaire'                 = 'Microsoft.MicrosoftSolitaireCollection'
+    'Office Hub'                = 'Microsoft.MicrosoftOfficeHub'
+    'People'                    = 'Microsoft.People'
+    'Feedback Hub'              = 'Microsoft.WindowsFeedbackHub'
+    'Groove Music / Media'      = 'Microsoft.ZuneMusic'
+    'Movies & TV'               = 'Microsoft.ZuneVideo'
+    'Xbox App'                  = 'Microsoft.GamingApp'
+    'Xbox Game Bar'             = 'Microsoft.XboxGamingOverlay'
+    'Xbox (قديم)'               = 'Microsoft.XboxApp'
+    'Xbox TCUI'                 = 'Microsoft.Xbox.TCUI'
+    'Phone Link'                = 'Microsoft.YourPhone'
+    'Maps'                      = 'Microsoft.WindowsMaps'
+    'Mixed Reality Portal'      = 'Microsoft.MixedReality.Portal'
+    'Skype'                     = 'Microsoft.SkypeApp'
+    'To Do'                     = 'Microsoft.Todos'
+    'Clipchamp'                 = 'Clipchamp.Clipchamp'
+    'Power Automate'            = 'Microsoft.PowerAutomateDesktop'
+    'Teams (شخصي)'              = 'MicrosoftTeams'
+    'Teams (جديد)'              = 'MSTeams'
+    'Cortana'                   = 'Microsoft.549981C3F5F10'
+    'Copilot'                   = 'Microsoft.Copilot'
+    'Bing Search'               = 'Microsoft.BingSearch'
+    'Candy Crush'               = '*CandyCrush*'
+    'TikTok'                    = '*TikTok*'
+    'Disney+'                   = '*Disney*'
+    'Facebook / Instagram'      = '*Facebook*'
+    'LinkedIn'                  = '*LinkedIn*'
+}
+
+# خدمات يمكن تعطيلها
+$ServiceCatalog = [ordered]@{
+    'الفاكس (Fax)'                     = 'Fax'
+    'Xbox Auth'                         = 'XblAuthManager'
+    'Xbox Game Save'                    = 'XblGameSave'
+    'Xbox Networking'                   = 'XboxNetApiSvc'
+    'Xbox Accessories'                  = 'XboxGipSvc'
+    'الطباعة (إن لم تكن لديك طابعة)'    = 'Spooler'
+    'الخرائط المحمّلة'                  = 'MapsBroker'
+    'وضع العرض في المتاجر'              = 'RetailDemo'
+    'جمع بيانات الاستخدام'              = 'DiagTrack'
+    'الوصول البعيد للسجل'               = 'RemoteRegistry'
+    'خدمة الهاتف'                       = 'PhoneSvc'
+    'بطاقات Smart Card'                 = 'SCardSvr'
+    'الموقع الجغرافي'                   = 'lfsvc'
+    'فهرسة البحث (يبطئ الأجهزة الضعيفة)' = 'WSearch'
+}
+
+# ---------------- المفضلة ----------------
+$FavFile = "$env:ProgramData\HSefrani\favorites.txt"
+$Favs = New-Object System.Collections.Generic.HashSet[string]
+if (Test-Path $FavFile) { Get-Content $FavFile -Encoding UTF8 | Where-Object { $_ } | ForEach-Object { [void]$Favs.Add($_) } }
+function Save-Favs { New-Item (Split-Path $FavFile) -ItemType Directory -Force | Out-Null; $Favs | Set-Content $FavFile -Encoding UTF8 }
+
 # ---------------- الأقسام ----------------
 $Sections = [ordered]@{
     main  = @{ Name = 'المهام الأساسية — بالترتيب'; Tile = [Drawing.Color]::FromArgb(30, 64, 120);  Accent = [Drawing.Color]::FromArgb(96, 165, 250) }
@@ -70,8 +247,11 @@ $Sections = [ordered]@{
     clean = @{ Name = 'التنظيف والكاش';              Tile = [Drawing.Color]::FromArgb(120, 40, 60);  Accent = [Drawing.Color]::FromArgb(251, 113, 133) }
     look  = @{ Name = 'المظهر والمستكشف';            Tile = [Drawing.Color]::FromArgb(76, 45, 110);  Accent = [Drawing.Color]::FromArgb(192, 132, 252) }
     sys   = @{ Name = 'النظام والخصوصية والأداء';    Tile = [Drawing.Color]::FromArgb(20, 83, 85);   Accent = [Drawing.Color]::FromArgb(45, 212, 191) }
+    net   = @{ Name = 'الشبكة والإنترنت';            Tile = [Drawing.Color]::FromArgb(15, 70, 110);  Accent = [Drawing.Color]::FromArgb(56, 189, 248) }
+    perf  = @{ Name = 'الأداء وبدء التشغيل والتحديثات'; Tile = [Drawing.Color]::FromArgb(80, 30, 100); Accent = [Drawing.Color]::FromArgb(232, 121, 249) }
+    comf  = @{ Name = 'اللغة والوقت والدخول';         Tile = [Drawing.Color]::FromArgb(60, 70, 25);   Accent = [Drawing.Color]::FromArgb(163, 230, 53) }
     lic   = @{ Name = 'التفعيل ونسخة ويندوز';        Tile = [Drawing.Color]::FromArgb(100, 80, 15);  Accent = [Drawing.Color]::FromArgb(250, 204, 21) }
-    tools = @{ Name = 'أدوات';                       Tile = [Drawing.Color]::FromArgb(110, 60, 20);  Accent = [Drawing.Color]::FromArgb(251, 146, 60) }
+    tools = @{ Name = 'أدوات الجهاز';                       Tile = [Drawing.Color]::FromArgb(110, 60, 20);  Accent = [Drawing.Color]::FromArgb(251, 146, 60) }
 }
 
 # ---------------- المهام ----------------
@@ -264,7 +444,162 @@ $Tasks = @(
        S = { Start-Process devmgmt.msc } },
 
     @{ G = 'tools'; I = 0xE90F; T = 'فحص ملفات النظام'; D = 'SFC + DISM RestoreHealth'
-       S = { Start-Process powershell -ArgumentList '-NoExit', '-Command', 'sfc /scannow; Dism /Online /Cleanup-Image /RestoreHealth' } }
+       S = { Start-Process powershell -ArgumentList '-NoExit', '-Command', 'sfc /scannow; Dism /Online /Cleanup-Image /RestoreHealth' } },
+    # ===== أدوات الجهاز (جديد) =====
+    @{ G = 'tools'; I = 0xE7F8; T = 'تقرير الجهاز'; D = 'معالج · رام · كرت · أقراص · بطارية'
+       S = { Show-Text 'تقرير الجهاز' (Get-DeviceReport) } },
+
+    @{ G = 'tools'; I = 0xE8D7; T = 'مفتاح ويندوز من BIOS'; D = 'المفتاح الأصلي المخزّن في الجهاز'
+       S = { $k = (Get-CimInstance SoftwareLicensingService).OA3xOriginalProductKey
+             if (-not $k) { throw 'لا يوجد مفتاح مخزّن في BIOS لهذا الجهاز' }
+             Set-Clipboard $k
+             [void][Windows.Forms.MessageBox]::Show("$k`n`n(تم نسخه)", 'مفتاح ويندوز الأصلي') } },
+
+    @{ G = 'tools'; I = 0xE78C; T = 'نسخ التعريفات احتياطياً'; D = 'قبل الفورمات — إلى فلاشة مثلاً'
+       S = { $d = Pick-Folder 'اختر مكان حفظ التعريفات (مثلاً فلاشة):'
+             $dest = Join-Path $d "Drivers_$env:COMPUTERNAME"
+             New-Item $dest -ItemType Directory -Force | Out-Null
+             Start-Process powershell -ArgumentList '-NoExit', '-Command', "dism /online /export-driver /destination:'$dest'; Write-Host ''; Write-Host 'DONE: $dest' -ForegroundColor Green" } },
+
+    @{ G = 'tools'; I = 0xE777; T = 'استرجاع التعريفات'; D = 'من مجلد النسخة الاحتياطية'
+       S = { $d = Pick-Folder 'اختر مجلد التعريفات (Drivers_...):'
+             Start-Process powershell -ArgumentList '-NoExit', '-Command', "pnputil /add-driver '$d\*.inf' /subdirs /install" } },
+
+    @{ G = 'apps'; I = 0xE74D; T = 'إزالة التطبيقات غير الضرورية'; D = 'Candy Crush · Xbox · TikTok …'
+       S = { $installed = Get-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+             $avail = @($BloatCatalog.Keys | Where-Object { $p = $BloatCatalog[$_]; $installed | Where-Object { $_.Name -like $p } | Select-Object -First 1 })
+             if (-not $avail) { throw 'لا توجد تطبيقات من القائمة مثبّتة' }
+             $sel = Show-Picker 'اختر التطبيقات لإزالتها' $avail 'إزالة المحدّد'
+             $prov = Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+             foreach ($n in $sel) {
+                 $p = $BloatCatalog[$n]
+                 $installed | Where-Object { $_.Name -like $p } | ForEach-Object { Remove-AppxPackage -Package $_.PackageFullName -AllUsers -ErrorAction SilentlyContinue }
+                 $prov | Where-Object { $_.DisplayName -like $p } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction SilentlyContinue | Out-Null }
+                 Write-Log "  أُزيل: $n"
+                 [Windows.Forms.Application]::DoEvents()
+             } } },
+
+    # ===== الشبكة =====
+    @{ G = 'net'; I = 0xE968; T = 'DNS كلاودفلير'; D = '1.1.1.1 — سريع وخاص'
+       S = { Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ServerAddresses '1.1.1.1', '1.0.0.1'
+             Clear-DnsClientCache } },
+
+    @{ G = 'net'; I = 0xE968; T = 'DNS جوجل'; D = '8.8.8.8'
+       S = { Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ServerAddresses '8.8.8.8', '8.8.4.4'
+             Clear-DnsClientCache } },
+
+    @{ G = 'net'; I = 0xE72C; T = 'DNS تلقائي'; D = 'العودة إلى DNS الراوتر'
+       S = { Get-NetAdapter | Where-Object Status -eq 'Up' | Set-DnsClientServerAddress -ResetServerAddresses
+             Clear-DnsClientCache } },
+
+    @{ G = 'net'; I = 0xE701; T = 'كلمات سر الواي فاي'; D = 'المحفوظة على هذا الجهاز'
+       S = { $tmp = Join-Path $env:TEMP "wifi_$(Get-Random)"
+             New-Item $tmp -ItemType Directory -Force | Out-Null
+             netsh wlan export profile key=clear folder="$tmp" | Out-Null
+             $rows = foreach ($f in Get-ChildItem $tmp -Filter *.xml) {
+                 [xml]$x = Get-Content $f.FullName -Encoding UTF8
+                 $key = $x.WLANProfile.MSM.security.sharedKey.keyMaterial
+                 '{0,-35} {1}' -f $x.WLANProfile.name, $(if ($key) { $key } else { '(بدون كلمة سر)' })
+             }
+             Remove-Item $tmp -Recurse -Force
+             if (-not $rows) { throw 'لا توجد شبكات واي فاي محفوظة' }
+             Show-Text 'كلمات سر الواي فاي' ((@('الشبكة                              كلمة السر', ('-' * 60)) + $rows) -join "`r`n") } },
+
+    @{ G = 'net'; I = 0xE90F; T = 'إصلاح الإنترنت'; D = 'Winsock · IP · DNS — ثم أعد التشغيل'
+       S = { netsh winsock reset | Out-Null
+             netsh int ip reset | Out-Null
+             ipconfig /flushdns | Out-Null
+             ipconfig /release | Out-Null
+             ipconfig /renew | Out-Null
+             Write-Log '  أعد تشغيل الكمبيوتر ليكتمل الإصلاح.' } },
+
+    @{ G = 'net'; I = 0xE749; T = 'مشاركة الطابعة والمجلدات'; D = 'في الشبكة المحلية'
+       S = { Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private
+             Enable-NetFirewallRule -Group '@FirewallAPI.dll,-32752'   # اكتشاف الشبكة
+             Enable-NetFirewallRule -Group '@FirewallAPI.dll,-28502' } }, # مشاركة الملفات والطابعات
+
+    # ===== الأداء =====
+    @{ G = 'perf'; I = 0xE7E8; T = 'برامج بدء التشغيل'; D = 'اختر ما تريد تعطيله'
+       S = { $map = [ordered]@{}
+             $keys = @{ 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run'
+                        'HKLM:\Software\Microsoft\Windows\CurrentVersion\Run' = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run'
+                        'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run' = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32' }
+             foreach ($k in $keys.Keys) {
+                 if (Test-Path $k) {
+                     (Get-Item $k).Property | ForEach-Object { $map["$_"] = @{ Approved = $keys[$k]; Name = $_ } }
+                 }
+             }
+             if ($map.Count -eq 0) { throw 'لا توجد برامج في بدء التشغيل' }
+             $sel = Show-Picker 'اختر البرامج لتعطيلها عند بدء التشغيل' ([string[]]$map.Keys) 'تعطيل المحدّد'
+             foreach ($n in $sel) {
+                 $e = $map[$n]
+                 if (-not (Test-Path $e.Approved)) { New-Item $e.Approved -Force | Out-Null }
+                 Set-ItemProperty -Path $e.Approved -Name $e.Name -Value ([byte[]](3,0,0,0,0,0,0,0,0,0,0,0)) -Type Binary -Force
+                 Write-Log "  عُطّل: $n"
+             } } },
+
+    @{ G = 'perf'; I = 0xE713; T = 'تعطيل خدمات غير ضرورية'; D = 'Fax · Xbox · الطباعة …'
+       S = { $avail = @($ServiceCatalog.Keys | Where-Object { Get-Service $ServiceCatalog[$_] -ErrorAction SilentlyContinue })
+             $sel = Show-Picker 'اختر الخدمات لتعطيلها' $avail 'تعطيل المحدّد'
+             foreach ($n in $sel) {
+                 $s = $ServiceCatalog[$n]
+                 Stop-Service $s -Force -ErrorAction SilentlyContinue
+                 Set-Service $s -StartupType Disabled -ErrorAction SilentlyContinue
+                 Write-Log "  عُطّلت: $n"
+             } } },
+
+    @{ G = 'perf'; I = 0xE769; T = 'إيقاف التحديثات 35 يوماً'; D = 'إيقاف مؤقت لتحديثات ويندوز'
+       S = { $u = 'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
+             $now = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+             $end = (Get-Date).AddDays(35).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+             Set-Reg $u 'PauseUpdatesStartTime' $now 'String'
+             Set-Reg $u 'PauseUpdatesExpiryTime' $end 'String'
+             foreach ($t in 'Feature', 'Quality') {
+                 Set-Reg $u "Pause$($t)UpdatesStartTime" $now 'String'
+                 Set-Reg $u "Pause$($t)UpdatesEndTime" $end 'String'
+             }
+             Write-Log "  التحديثات متوقفة حتى $((Get-Date).AddDays(35).ToString('yyyy-MM-dd'))" } },
+
+    @{ G = 'perf'; I = 0xE768; T = 'استئناف التحديثات'; D = 'إلغاء الإيقاف المؤقت'
+       S = { $u = 'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
+             foreach ($n in 'PauseUpdatesStartTime', 'PauseUpdatesExpiryTime', 'PauseFeatureUpdatesStartTime', 'PauseFeatureUpdatesEndTime', 'PauseQualityUpdatesStartTime', 'PauseQualityUpdatesEndTime') {
+                 Remove-ItemProperty -Path $u -Name $n -ErrorAction SilentlyContinue } } },
+
+    @{ G = 'perf'; I = 0xE7F8; T = 'منع تحديث التعريفات'; D = 'ويندوز لا يستبدل تعريفاتك'
+       S = { Set-Reg 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' 'ExcludeWUDriversInQualityUpdate' 1
+             Set-Reg 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching' 'SearchOrderConfig' 0 } },
+
+    # ===== اللغة والوقت والدخول =====
+    @{ G = 'comf'; I = 0xE765; T = 'إضافة لوحة المفاتيح العربية'; D = 'Arabic (101)'
+       S = { $l = Get-WinUserLanguageList
+             if (-not ($l | Where-Object LanguageTag -like 'ar*')) { $l.Add('ar-SA'); Set-WinUserLanguageList $l -Force }
+             else { Write-Log '  العربية موجودة مسبقاً' } } },
+
+    @{ G = 'comf'; I = 0xE765; T = 'التبديل بين اللغات'; D = 'Alt + Shift'
+       S = { $t = 'HKCU:\Keyboard Layout\Toggle'
+             Set-Reg $t 'Language Hotkey' '1' 'String'
+             Set-Reg $t 'Hotkey' '1' 'String'
+             Set-Reg $t 'Layout Hotkey' '3' 'String' } },
+
+    @{ G = 'comf'; I = 0xE775; T = 'المنطقة الزمنية'; D = 'اختيار من القائمة'
+       S = { $zones = [TimeZoneInfo]::GetSystemTimeZones()
+             $sel = Show-Picker 'اختر المنطقة الزمنية' ([string[]]($zones | ForEach-Object DisplayName)) 'تطبيق' -Single
+             $z = $zones | Where-Object DisplayName -eq $sel[0] | Select-Object -First 1
+             Set-TimeZone -Id $z.Id
+             Write-Log "  المنطقة: $($z.DisplayName)" } },
+
+    @{ G = 'comf'; I = 0xE787; T = 'تنسيق التاريخ'; D = 'يوم/شهر/سنة · 24 ساعة'
+       S = { $i = 'HKCU:\Control Panel\International'
+             Set-Reg $i 'sShortDate' 'dd/MM/yyyy' 'String'
+             Set-Reg $i 'sShortTime' 'HH:mm' 'String'
+             Set-Reg $i 'sTimeFormat' 'HH:mm:ss' 'String'
+             Set-Reg $i 'iFirstDayOfWeek' '0' 'String' } },
+
+    @{ G = 'comf'; I = 0xE72E; T = 'الدخول بدون كلمة سر'; D = 'يفتح netplwiz — أزل علامة الاختيار'
+       S = { Set-Reg 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device' 'DevicePasswordLessBuildVersion' 0
+             Start-Process netplwiz
+             Write-Log '  في النافذة: أزل علامة "Users must enter a user name and password" ثم OK وأدخل كلمة السر مرة واحدة.' } }
+
 )
 
 # ---------------- الألوان والخطوط ----------------
@@ -389,7 +724,21 @@ function Get-Tile($ctl) {
     $ctl
 }
 
-$onClick = { Invoke-Tile (Get-Tile $this) }
+function Update-FavMark($tile) {
+    $t = $tile.Tag
+    $t.TitleLbl.Text = $(if ($Favs.Contains($t.Task.T)) { "★ $($t.Task.T)" } else { $t.Task.T })
+}
+$onClick = {
+    $tile = Get-Tile $this
+    if ($_.Button -eq 'Right') {
+        $name = $tile.Tag.Task.T
+        if ($Favs.Contains($name)) { [void]$Favs.Remove($name) } else { [void]$Favs.Add($name) }
+        Save-Favs
+        Update-FavMark $tile
+    } elseif ($_.Button -eq 'Left') {
+        Invoke-Tile $tile
+    }
+}
 $onEnter = { $t = Get-Tile $this; if ($t.Tag.State -eq 'idle') { $t.BackColor = $t.Tag.Hover } }
 $onLeave = {
     $t = Get-Tile $this
@@ -444,10 +793,11 @@ function New-Tile($task, $sec) {
     $tile.Controls.Add($top)
 
     $hover = [Drawing.Color]::FromArgb([Math]::Min(255, $sec.Tile.R + 28), [Math]::Min(255, $sec.Tile.G + 28), [Math]::Min(255, $sec.Tile.B + 28))
-    $tile.Tag = @{ Task = $task; Base = $sec.Tile; Hover = $hover; State = 'idle'; Mark = $mark }
+    $tile.Tag = @{ Task = $task; Base = $sec.Tile; Hover = $hover; State = 'idle'; Mark = $mark; TitleLbl = $title }
+    Update-FavMark $tile
 
     foreach ($c in @($tile, $desc, $title, $top, $icon, $mark)) {
-        $c.Add_Click($onClick); $c.Add_MouseEnter($onEnter); $c.Add_MouseLeave($onLeave)
+        $c.Add_MouseUp($onClick); $c.Add_MouseEnter($onEnter); $c.Add_MouseLeave($onLeave)
         $tip.SetToolTip($c, "$($task.T)`n$($task.D)")
     }
     $tile
@@ -455,38 +805,7 @@ function New-Tile($task, $sec) {
 
 # ---------------- نافذة اختيار البرامج ----------------
 function Show-AppPicker {
-    $dlg = New-Object Windows.Forms.Form
-    $dlg.Text = 'اختيار برامج للتنزيل'
-    $dlg.Size = New-Object Drawing.Size(680, 520)
-    $dlg.StartPosition = 'CenterParent'
-    $dlg.BackColor = $cBg; $dlg.ForeColor = $cText
-    $dlg.RightToLeft = 'Yes'; $dlg.RightToLeftLayout = $true
-    $dlg.Font = New-Object Drawing.Font('Segoe UI', 10)
-
-    $list = New-Object Windows.Forms.CheckedListBox
-    $list.Dock = 'Fill'; $list.CheckOnClick = $true; $list.MultiColumn = $true; $list.ColumnWidth = 210
-    $list.BackColor = $cHead; $list.ForeColor = $cText; $list.BorderStyle = 'None'
-    $list.RightToLeft = 'No'
-    foreach ($n in $AppCatalog.Keys) { [void]$list.Items.Add($n) }
-
-    $pb = New-Object Windows.Forms.FlowLayoutPanel
-    $pb.Dock = 'Bottom'; $pb.Height = 52; $pb.Padding = New-Object Windows.Forms.Padding(8)
-    $ok = New-Object Windows.Forms.Button
-    $ok.Text = 'تثبيت المحدّد'; $ok.Size = New-Object Drawing.Size(150, 34)
-    $ok.FlatStyle = 'Flat'; $ok.BackColor = [Drawing.Color]::FromArgb(22, 163, 74); $ok.ForeColor = $cText
-    $ok.DialogResult = 'OK'
-    $all = New-Object Windows.Forms.Button
-    $all.Text = 'تحديد الكل'; $all.Size = New-Object Drawing.Size(110, 34)
-    $all.FlatStyle = 'Flat'; $all.BackColor = [Drawing.Color]::FromArgb(71, 85, 105); $all.ForeColor = $cText
-    $all.Add_Click({ for ($i = 0; $i -lt $list.Items.Count; $i++) { $list.SetItemChecked($i, $true) } })
-    $pb.Controls.Add($ok); $pb.Controls.Add($all)
-
-    $dlg.Controls.Add($list); $dlg.Controls.Add($pb)
-    $dlg.AcceptButton = $ok
-
-    if ($dlg.ShowDialog($form) -ne 'OK' -or $list.CheckedItems.Count -eq 0) { throw 'لم يُختر أي برنامج' }
-
-    $names = @($list.CheckedItems)
+    $names = Show-Picker 'اختيار برامج للتنزيل' ([string[]]$AppCatalog.Keys) 'تثبيت المحدّد'
     $cmds = foreach ($n in $names) {
         $id = $AppCatalog[$n]
         if ($id -like 'msstore:*') { "winget install --id $($id.Substring(8)) -s msstore --accept-source-agreements --accept-package-agreements" }
@@ -521,6 +840,33 @@ function New-BarButton($text, $w, $color, $action) {
 
 New-BarButton '▶  تطبيق الأساسية (1 → 7)' 210 ([Drawing.Color]::FromArgb(37, 99, 235)) { Invoke-Group 'main' 'المهام الأساسية' }
 New-BarButton 'تنظيف شامل' 140 ([Drawing.Color]::FromArgb(190, 18, 60)) { Invoke-Group 'clean' 'التنظيف' }
+$favMenu = New-Object Windows.Forms.ContextMenuStrip
+$favMenu.RightToLeft = 'Yes'
+[void]$favMenu.Items.Add('تنفيذ المفضلة', $null, {
+    $list = @($tiles | Where-Object { $Favs.Contains($_.Tag.Task.T) })
+    if (-not $list) { Write-Log 'لا توجد مفضلة. اضغط بالزر الأيمن على أي مربع لإضافته.'; return }
+    $progress.Maximum = $list.Count; $progress.Value = 0
+    foreach ($x in $list) { if ($x.Tag.State -ne 'ok') { Invoke-Tile $x }; $progress.Value++ }
+    Write-Log "انتهت المفضلة ($($list.Count))."
+})
+[void]$favMenu.Items.Add('حفظ المفضلة في ملف (فلاشة)…', $null, {
+    $sd = New-Object Windows.Forms.SaveFileDialog
+    $sd.Filter = 'ملف المفضلة|*.txt'; $sd.FileName = 'HSefrani-favorites.txt'
+    if ($sd.ShowDialog($form) -eq 'OK') { $Favs | Set-Content $sd.FileName -Encoding UTF8; Write-Log "حُفظت المفضلة في $($sd.FileName)" }
+})
+[void]$favMenu.Items.Add('تحميل المفضلة من ملف…', $null, {
+    $od = New-Object Windows.Forms.OpenFileDialog
+    $od.Filter = 'ملف المفضلة|*.txt'
+    if ($od.ShowDialog($form) -eq 'OK') {
+        $Favs.Clear()
+        Get-Content $od.FileName -Encoding UTF8 | Where-Object { $_ } | ForEach-Object { [void]$Favs.Add($_) }
+        Save-Favs
+        foreach ($x in $tiles) { Update-FavMark $x }
+        Write-Log "حُمّلت $($Favs.Count) مهمة مفضلة."
+    }
+})
+[void]$favMenu.Items.Add('مسح المفضلة', $null, { $Favs.Clear(); Save-Favs; foreach ($x in $tiles) { Update-FavMark $x }; Write-Log 'مُسحت المفضلة.' })
+New-BarButton '★  المفضلة ▾' 130 ([Drawing.Color]::FromArgb(202, 138, 4)) { $favMenu.Show($this, 0, $this.Height) }
 New-BarButton 'إعادة تشغيل الكمبيوتر' 170 ([Drawing.Color]::FromArgb(71, 85, 105)) {
     if ([Windows.Forms.MessageBox]::Show('إعادة تشغيل الكمبيوتر الآن؟', 'تأكيد', 'YesNo', 'Question') -eq 'Yes') { Restart-Computer -Force }
 }
@@ -537,7 +883,7 @@ $form.Add_Shown({
     $form.TopMost = $false; $form.Activate()
     foreach ($h in $headers) { $h.Width = [Math]::Max(200, $panel.ClientSize.Width - 40) }
 })
-Write-Log 'جاهز. اضغط على أي مربع، أو استعمل الأزرار في الأسفل.'
+Write-Log 'جاهز. زر أيسر = تنفيذ المربع · زر أيمن = إضافته إلى المفضلة ★'
 [void]$form.ShowDialog()
 }
 
