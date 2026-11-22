@@ -1,5 +1,5 @@
 # ============================================================
-#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v5  —  H.sefrani
+#  لوحة إعدادات ما بعد تنصيب ويندوز  —  v6  —  H.sefrani
 #  التشغيل:  irm is.gd/Sefrani | iex
 #  ملاحظة: مع RightToLeft = Yes يعكس ويندوز محاذاة النص، لذا Left تعني يمين الشاشة.
 # ============================================================
@@ -273,6 +273,7 @@ $Sections = [ordered]@{
     boot  = @{ Name = 'إعادة التشغيل الخاصة';         Tile = [Drawing.Color]::FromArgb(55, 55, 70);   Accent = [Drawing.Color]::FromArgb(165, 180, 252) }
     feat  = @{ Name = 'ميزات ويندوز';                 Tile = [Drawing.Color]::FromArgb(25, 60, 100);  Accent = [Drawing.Color]::FromArgb(125, 211, 252) }
     quick = @{ Name = 'اختصارات سريعة';               Tile = [Drawing.Color]::FromArgb(40, 48, 62);   Accent = [Drawing.Color]::FromArgb(226, 232, 240) }
+    keys  = @{ Name = 'اختصارات وأوامر مفيدة';      Tile = [Drawing.Color]::FromArgb(70, 50, 20);   Accent = [Drawing.Color]::FromArgb(253, 186, 116) }
     lic   = @{ Name = 'التفعيل ونسخة ويندوز';        Tile = [Drawing.Color]::FromArgb(100, 80, 15);  Accent = [Drawing.Color]::FromArgb(250, 204, 21) }
     tools = @{ Name = 'أدوات الجهاز';                       Tile = [Drawing.Color]::FromArgb(110, 60, 20);  Accent = [Drawing.Color]::FromArgb(251, 146, 60) }
 }
@@ -755,7 +756,112 @@ $Tasks = @(
     @{ G = 'quick'; I = 0xE81C; T = 'عارض الأحداث'; D = 'eventvwr.msc'; S = { Start-Process eventvwr.msc } },
     @{ G = 'quick'; I = 0xE946; T = 'معلومات النظام'; D = 'msinfo32'; S = { Start-Process msinfo32 } },
     @{ G = 'quick'; I = 0xE9D2; T = 'مراقب الموارد'; D = 'resmon'; S = { Start-Process resmon } },
-    @{ G = 'quick'; I = 0xE756; T = 'موجه الأوامر (مسؤول)'; D = 'cmd'; S = { Start-Process cmd -Verb RunAs } }
+    @{ G = 'quick'; I = 0xE756; T = 'موجه الأوامر (مسؤول)'; D = 'cmd'; S = { Start-Process cmd -Verb RunAs } },
+    # ===== اختصارات وأوامر =====
+    @{ G = 'keys'; I = 0xE765; T = 'ورقة اختصارات الكيبورد'; D = 'Win + X · Win + V · Win + Shift + S …'
+       S = { Show-Text 'اختصارات لوحة المفاتيح' (@(
+               'Win + X                 قائمة سريعة (مدير الأجهزة، الأقراص، PowerShell كمسؤول)'
+               'Win + I                 الإعدادات'
+               'Win + E                 مستكشف الملفات'
+               'Win + V                 سجل الحافظة'
+               'Win + Shift + S         لقطة شاشة لجزء من الشاشة'
+               'Win + .                 الإيموجي والرموز'
+               'Win + Ctrl + Shift + B  إعادة تشغيل كرت الشاشة عند التجمّد'
+               'Ctrl + Shift + Esc      مدير المهام مباشرة'
+               'Win + Pause             معلومات الجهاز'
+               'Win + L                 قفل الجهاز'
+               'Win + D                 إظهار سطح المكتب'
+               'Win + Tab               كل النوافذ وأسطح المكتب'
+               'Win + Ctrl + D          سطح مكتب افتراضي جديد'
+               'Win + ← / →             تقسيم الشاشة بين نافذتين'
+               'Win + ↑                 تكبير النافذة'
+               'Win + Shift + ← / →     نقل النافذة إلى الشاشة الأخرى'
+               'Win + P                 وضع الشاشة الثانية / البروجكتور'
+               'Win + K                 الاتصال بشاشة لاسلكية'
+               'Win + H                 الكتابة بالصوت'
+               'Win + Alt + R           تسجيل فيديو للشاشة (Game Bar)'
+               'Ctrl + Shift + T        إعادة فتح آخر تبويب مغلق في المتصفح'
+               'Alt + F4                إغلاق النافذة / إيقاف التشغيل من سطح المكتب'
+             ) -join "`r`n") } },
+
+    @{ G = 'keys'; I = 0xE756; T = 'ورقة أوامر Run'; D = 'Win + R ثم اكتب الأمر'
+       S = { Show-Text 'أوامر Run  (Win + R)' (@(
+               'appwiz.cpl        البرامج المثبّتة'
+               'ncpa.cpl          اتصالات الشبكة'
+               'sysdm.cpl         خصائص النظام'
+               'devmgmt.msc       إدارة الأجهزة والتعريفات'
+               'diskmgmt.msc      إدارة الأقراص'
+               'services.msc      الخدمات'
+               'msconfig          إعدادات الإقلاع'
+               'shell:startup     مجلد بدء التشغيل'
+               'shell:sendto      قائمة "إرسال إلى"'
+               '%temp%            الملفات المؤقتة'
+               '%appdata%         بيانات البرامج'
+               'winver            نسخة ويندوز'
+               'control printers  الطابعات'
+               'netplwiz          حسابات المستخدمين'
+               'mmsys.cpl         أجهزة الصوت'
+               'powercfg.cpl      خيارات الطاقة'
+               'firewall.cpl      الجدار الناري'
+               'cleanmgr          تنظيف القرص'
+               'dxdiag            معلومات DirectX وكرت الشاشة'
+               'osk               لوحة المفاتيح على الشاشة'
+             ) -join "`r`n") } },
+
+    @{ G = 'keys'; I = 0xE756; T = 'ورقة أوامر CMD'; D = 'sfc · DISM · winget · ipconfig …'
+       S = { Show-Text 'أوامر CMD / PowerShell (كمسؤول)' (@(
+               'sfc /scannow                                    فحص ملفات النظام وإصلاحها'
+               'DISM /Online /Cleanup-Image /RestoreHealth      إصلاح صورة ويندوز'
+               'winget upgrade --all                            تحديث كل البرامج'
+               'winget search <اسم>                             البحث عن برنامج'
+               'winget install <id>                             تثبيت برنامج'
+               'ipconfig /all                                   كل معلومات الشبكة'
+               'ipconfig /flushdns                              مسح كاش DNS'
+               'ping 8.8.8.8 -t                                 اختبار الاتصال المستمر'
+               'netsh wlan show profile name="X" key=clear      كلمة سر شبكة واي فاي'
+               'powercfg /batteryreport                         تقرير البطارية'
+               'slmgr /xpr                                      حالة تفعيل ويندوز'
+               'wmic bios get serialnumber                      الرقم التسلسلي'
+               'systeminfo                                      ملخّص النظام وتاريخ التنصيب'
+               'chkdsk C: /f /r                                 فحص الهارد'
+               'shutdown /r /fw /t 0                            إعادة التشغيل إلى BIOS'
+               'shutdown /r /o /t 0                             خيارات الإقلاع المتقدمة'
+               'shutdown /s /t 3600                             إيقاف التشغيل بعد ساعة'
+               'shutdown /a                                     إلغاء الإيقاف المجدول'
+               'tasklist / taskkill /im name.exe /f             عرض وإغلاق البرامج'
+               'netstat -ano                                    الاتصالات المفتوحة'
+             ) -join "`r`n") } },
+
+    @{ G = 'keys'; I = 0xE8F4; T = 'تفعيل سجل الحافظة'; D = 'Win + V لكل ما نسخته'
+       S = { Set-Reg 'HKCU:\Software\Microsoft\Clipboard' 'EnableClipboardHistory' 1 } },
+
+    @{ G = 'keys'; I = 0xE7E8; T = 'مجلد بدء التشغيل'; D = 'shell:startup'
+       S = { Start-Process explorer 'shell:startup' } },
+
+    @{ G = 'keys'; I = 0xE74D; T = 'مجلد الملفات المؤقتة'; D = '%temp%'
+       S = { Start-Process explorer $env:TEMP } },
+
+    @{ G = 'keys'; I = 0xE946; T = 'نسخة ويندوز'; D = 'winver'
+       S = { Start-Process winver } },
+
+    @{ G = 'keys'; I = 0xE7F8; T = 'ملخّص النظام'; D = 'systeminfo + تاريخ التنصيب'
+       S = { Show-Text 'systeminfo' ((systeminfo | Out-String).Trim()) } },
+
+    @{ G = 'keys'; I = 0xE749; T = 'الطابعات'; D = 'control printers'
+       S = { Start-Process control 'printers' } },
+
+    @{ G = 'keys'; I = 0xE767; T = 'أجهزة الصوت'; D = 'mmsys.cpl'
+       S = { Start-Process mmsys.cpl } },
+
+    @{ G = 'keys'; I = 0xE7FC; T = 'معلومات كرت الشاشة'; D = 'dxdiag'
+       S = { Start-Process dxdiag } },
+
+    @{ G = 'keys'; I = 0xE823; T = 'إيقاف التشغيل بعد مدة'; D = 'مؤقت بالدقائق'
+       S = { $m = Ask 'بعد كم دقيقة يُطفأ الجهاز؟ (0 = إلغاء مؤقت سابق)' 'إيقاف التشغيل المجدول' '60'
+             if ($m -eq '') { throw 'أُلغي' }
+             if ([int]$m -eq 0) { shutdown /a | Out-Null; Write-Log '  أُلغي الإيقاف المجدول.' }
+             else { shutdown /s /t ([int]$m * 60) | Out-Null; Write-Log "  سيُطفأ الجهاز بعد $m دقيقة." } } }
+
 
 )
 
