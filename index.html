@@ -307,6 +307,18 @@ $Tasks = @(
     @{ G = 'ext'; I = 0xE756; T = 'Chris Titus WinUtil'; D = 'irm christitus.com/win | iex'
        S = { Start-Console 'irm christitus.com/win | iex' } },
 
+    @{ G = 'ext'; I = 0xE896; T = 'تنزيل ويندوز 11 (رسمي)'; D = 'ISO من موقع مايكروسوفت'
+       S = { Start-Process 'https://www.microsoft.com/software-download/windows11' } },
+
+    @{ G = 'ext'; I = 0xE896; T = 'تنزيل ويندوز 10 (رسمي)'; D = 'Media Creation Tool من مايكروسوفت'
+       S = { Start-Process 'https://www.microsoft.com/software-download/windows10' } },
+
+    @{ G = 'ext'; I = 0xE896; T = 'تنزيل أوفيس (رسمي)'; D = 'من حسابك في مايكروسوفت'
+       S = { Start-Process 'https://account.microsoft.com/services' } },
+
+    @{ G = 'ext'; I = 0xE88E; T = 'Rufus'; D = 'صنع فلاشة تنصيب من ملف ISO'
+       S = { Start-Console 'winget install --id Rufus.Rufus -e --accept-source-agreements --accept-package-agreements' } },
+
     # ===== الأساسية =====
     @{ G = 'main'; I = 0xE7F4; T = '1- أيقونات سطح المكتب'; D = 'الكمبيوتر · الشبكة · لوحة التحكم'
        S = { $icons = '{20D04FE0-3AEA-1069-A2D8-08002B30309D}', '{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}', '{5399E694-6CE5-4D6C-8FCE-1D8870FDCBA0}'
