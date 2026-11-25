@@ -1069,7 +1069,7 @@ $W  = [Math]::Min(1800, [int]($wa.Width * 0.95))
 $H  = [Math]::Min([int]($wa.Height * 0.88), [int]($W * 0.56))
 
 $form = New-Object Windows.Forms.Form
-$form.Text = 'لوحة إعدادات ويندوز — H.sefrani'
+$form.Text = 'تطبيقات ابو كرمو — H.sefrani'
 $form.Size = New-Object Drawing.Size($W, $H)
 $form.MinimumSize = New-Object Drawing.Size(640, 480)
 $form.StartPosition = 'CenterScreen'
@@ -1084,7 +1084,7 @@ $head = New-Object Windows.Forms.Panel
 $head.Dock = 'Top'; $head.Height = 80; $head.BackColor = $cHead
 $head.Padding = New-Object Windows.Forms.Padding(20, 4, 20, 4)
 $hTitle = New-Object Windows.Forms.Label
-$hTitle.Text = 'لوحة إعدادات ويندوز'
+$hTitle.Text = 'تطبيقات ابو كرمو'
 $hTitle.Font = New-Object Drawing.Font('Segoe UI', 16, [Drawing.FontStyle]::Bold)
 $hTitle.ForeColor = $cText; $hTitle.Dock = 'Top'; $hTitle.Height = 40; $hTitle.TextAlign = 'MiddleLeft'
 $os = Get-CimInstance Win32_OperatingSystem
